@@ -28,7 +28,7 @@ A right-to-left variant `codex.style-rtl.css` is also available.
 Import from `@wikimedia/codex`, register in `components`, use in the template:
 ```vue
 <template>
-	<cdx-button action="progressive" weight="primary">Click me!</cdx-button>
+	<cdx-button action="progressive" weight="primary">Save</cdx-button>
 </template>
 <script>
 import { defineComponent } from 'vue';
@@ -36,6 +36,10 @@ import { CdxButton } from '@wikimedia/codex';
 export default defineComponent( { components: { CdxButton } } );
 </script>
 ```
+Label buttons with the action they trigger (e.g. `Save`, `Search`, `Add to list`) — never
+"Click me"/"Click here": the button text is the accessible name, and generic labels fail
+assistive tech and usability.
+
 Per-component docs live in the "Components" section, e.g. the Button page.
 
 ### CSS-only components
