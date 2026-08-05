@@ -159,6 +159,26 @@ column, semicolon-separated:
 Photographs by Festival Salon;Salon Festival international de musique de chambre de Provence
 ```
 
+### Per-year edition categories
+
+When the account covers a recurring event, add one `Category:<Event> <year>` per year and link each
+to its Wikidata **edition item** — not just to the parent event item. The edition item has
+`instance of` a festival-edition class (e.g. `Q41582469`), `part of` the parent festival
+(`P179 → Q3070609`), `point in time` `P585`, `edition number` `P393`, and `Commons category`
+`P373`. Do the linking on the Wikidata side (as `1VeertjeBot`/your bot) *after* the categories exist:
+
+- **Add the Commons sitelink** — each edition item gets `commonswiki` → `Category:<Event> <year>`
+  (via `wbsetsitelink`). This is the actual "category ↔ Wikidata item" link.
+- **Create missing edition items first** — if a year has no item, create it (labels/descriptions
+  in the event's languages, the claims above) before linking.
+- **Chain the editions** with `P155` (follows) / `P156` (followed by) so navigation is complete.
+- The per-file template's edition category must match the category name exactly
+  (`Category:Musique à l'Empéri ${year}` from the pattypan `year` column).
+
+Real example: for Festival Salon the 2002 and 2005 items did not exist; after creating
+`Musique à l'Empéri 2002` and `Musique à l'Empéri 2005`, each of the ten editions
+(2002–2013) has its `commonswiki` sitelink and the `P155`/`P156` chain is unbroken.
+
 ## Finding already-transferred files (dedupe)
 
 Before building a manifest for an account you have transferred before, check what is already on
