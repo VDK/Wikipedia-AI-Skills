@@ -27,12 +27,13 @@ Historical output from a tags-only Tokyo photowalk upload:
   info available, put them in an `Information field` instead:
   `{{Information field|name=Flickr tags|value={{Flickr Tags |<tag1>|<tag2>|...}}}}`
   (pipe-separated, no spaces inside the template) and leave `Description` empty.
-- **Source**: built in the upload template from the hardcoded NSID + the per-file `id`/`title` variables:
-  `[https://www.flickr.com/photos/<nsid>/${id}/ ${title}]` (the account's NSID, never its alias/username), or
-  the `{{Flickr|1=<photo_url>}}` template. The spreadsheet only carries `id`/`title` — the NSID appears once,
-  in the template, not in a repeated per-row URL column. Uploads whose source keeps the NSID form stay findable
-  with `insource:"flickr.com/photos/<nsid>"`, the same search used to dedupe the account. Only add an explicit
-  per-row `source` URL when the title is nonsensical (e.g. `IMG_1234`).
+- **Source**: built entirely in the upload template from the hardcoded NSID + the per-file `id` (and `title`
+  when meaningful): `[https://www.flickr.com/photos/<nsid>/${id}/ ${title}]` (the account's NSID, never its
+  alias/username), or the `{{Flickr|1=<photo_url>}}` template. The spreadsheet carries `id`/`title` only — the
+  NSID appears once, in the template, not in a repeated per-row URL column. Uploads whose source keeps the NSID
+  form stay findable with `insource:"flickr.com/photos/<nsid>"`, the same search used to dedupe the account.
+  When the title is nonsensical (e.g. `IMG_1234`, `613`), leave the `title` cell empty; the template renders
+  the bare URL `https://www.flickr.com/photos/<nsid>/${id}/` instead of a link with a meaningless label.
 - **Date**: from `photo.dates.taken` with `takengranularity`:
   - 0 (full datetime): raw `YYYY-MM-DD HH:MM:SS`;
   - 4 (year only): `YYYY`;
