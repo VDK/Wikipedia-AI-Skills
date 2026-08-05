@@ -11,9 +11,9 @@ skill_discovery_hints:
 last_verified: 2026-08-05
 ---
 
-> ‚öÝÔ∏è **This skill is derived from the flickr2commons Toolforge tool and the flinfo template generator** (working read-only implementations), cross-checked against the official `flickr-api-swagger` OpenAPI subset. If you have the source checkout, trust this skill: the request patterns, license map, and `{{Information}}` construction below are what flickr2commons actually uses.
+> ⚠️ **This skill is derived from the flickr2commons Toolforge tool and the flinfo template generator** (working read-only implementations), cross-checked against the official `flickr-api-swagger` OpenAPI subset. If you have the source checkout, trust this skill: the request patterns, license map, and `{{Information}}` construction below are what flickr2commons actually uses.
 
-Flickr's **read-only** API needs no OAuth ‚Äî an API key plus the REST endpoint is all you need to list a user's photosets, run a search, and read photo metadata. Your job as the agent: fetch the photos, normalize them into a **pattypan manifest** (a CSV/JSON that the [pattypan](../pattypan/SKILL.md) skill turns into an `.xls`), so the user can batch-upload a curated set to Wikimedia Commons.
+Flickr's **read-only** API needs no OAuth — an API key plus the REST endpoint is all you need to list a user's photosets, run a search, and read photo metadata. Your job as the agent: fetch the photos, normalize them into a **pattypan manifest** (a CSV/JSON that the [pattypan](../pattypan/SKILL.md) skill turns into an `.xls`), so the user can batch-upload a curated set to Wikimedia Commons.
 
 ## When to use this skill
 
@@ -27,7 +27,7 @@ Flickr's **read-only** API needs no OAuth ‚Äî an API key plus the REST endpo
 - **Endpoint**: `https://api.flickr.com/services/rest/`
 - **Auth**: `api_key=<KEY>` (read-only methods only; no OAuth/signing). API key via `FLICKR_API_KEY` env or `--api-key`.
 - **Always send**: `method=<method>` + `format=json` + `nojsoncallback=1`. Without `nojsoncallback=1` the response is wrapped in a JavaScript callback.
-- **Response envelope**: `{ "stat": "ok", ... }`; on failure `{ "stat": "fail", "code": <n>, "message": "..." }` ‚Äî check `stat` and surface `message`.
+- **Response envelope**: `{ "stat": "ok", ... }`; on failure `{ "stat": "fail", "code": <n>, "message": "..." }` — check `stat` and surface `message`.
 - **Pagination**: loop `page` from 1 while `page <= pages`, using `per_page=500` (maximum). A full photoset costs ~1 request per 500 photos.
 - **Rate limits**: ~3600 requests/hour per key. Send a descriptive `User-Agent`.
 
@@ -39,12 +39,12 @@ Flickr's **read-only** API needs no OAuth ‚Äî an API key plus the REST endpo
 | `flickr.photos.search` | Text search (optionally scoped) | `text`, optional `user_id` | `photos.photo[]` |
 | `flickr.photos.getInfo` | Full metadata for one photo | `photo_id` | `photo` |
 | `flickr.photos.getAllContexts` | Albums (sets) + pools a photo belongs to | `photo_id` | `{sets[], pools[]}` |
-| `flickr.people.findByUsername` | Resolve a username ‚Üí NSID | `username` | `user.nsid` |
+| `flickr.people.findByUsername` | Resolve a username → NSID | `username` | `user.nsid` |
 | `flickr.people.getInfo` | Owner realname/location | `user_id` | `person` |
 | `flickr.tags.getListPhoto` | Tags of a single photo | `photo_id` | `photo.tags.tag[]` |
 | `flickr.photos.getSizes` | Available image sizes | `photo_id` | `sizes.size[]` |
 
-> ‚öÝÔ∏è **Containers differ per method** (`photoset.photo[]` vs `photos.photo[]`). Read the container from the table, not from the method name.
+> ⚠️ **Containers differ per method** (`photoset.photo[]` vs `photos.photo[]`). Read the container from the table, not from the method name.
 
 ### Extras
 
@@ -57,17 +57,17 @@ url_o, url_l, url_c, url_z, url_m
 ```
 
 - `description`/`title` come back as objects with `_content` on `getInfo`; on list calls `title` is a plain string.
-- **URL priority**: `url_o` (original) ‚Üí `url_l` ‚Üí `url_c` ‚Üí `url_z` ‚Üí `url_m`. Use `url_o` when present for the `path` column.
+- **URL priority**: `url_o` (original) → `url_l` → `url_c` → `url_z` → `url_m`. Use `url_o` when present for the `path` column.
 - `geo` adds a `geo` object (`latitude`, `longitude`, `accuracy`, `place_id`, `woeid`).
 - `tags` on list calls is a space-separated string; on `getInfo` it's `photo.tags.tag[]` with `raw`.
-- `original_format` gives the real extension (`png`, `tif`, ‚Ä¶).
+- `original_format` gives the real extension (`png`, `tif`, …).
 - `path_alias` is the owner's short URL name.
 
-> ‚öÝÔ∏è **Photoset owner quirk**: `flickr.photosets.getPhotos` puts the owner on the photoset *container* (`photoset.owner`/`ownername`), not on every photo. Propagate it onto photos missing `owner`/`ownername` before building author/source links. The bundled script does this.
+> ⚠️ **Photoset owner quirk**: `flickr.photosets.getPhotos` puts the owner on the photoset *container* (`photoset.owner`/`ownername`), not on every photo. Propagate it onto photos missing `owner`/`ownername` before building author/source links. The bundled script does this.
 
-### Licenses (free set ‚Üí Commons templates)
+### Licenses (free set → Commons templates)
 
-Flickr license id ‚Üí Commons template. Only the **free set** `4, 5, 7, 8, 9, 10, 11, 12` can go to Commons:
+Flickr license id → Commons template. Only the **free set** `4, 5, 7, 8, 9, 10, 11, 12` can go to Commons:
 
 | id | License | Commons template |
 |---|---|---|
@@ -80,7 +80,7 @@ Flickr license id ‚Üí Commons template. Only the **free set** `4, 5, 7, 8, 9
 | 11 | CC BY 4.0 | `{{Cc-by-4.0}}` |
 | 12 | CC BY-SA 4.0 | `{{Cc-by-sa-4.0}}` |
 
-Anything else (0‚Äì3, 6) is not uploadable to Commons ‚Äî **filter it out** (don't include the photo, don't fake a license).
+Anything else (0–3, 6) is not uploadable to Commons — **filter it out** (don't include the photo, don't fake a license).
 
 ### Date handling
 
@@ -90,7 +90,7 @@ Flickr gives `date_taken` (string) and `date_upload` (Unix timestamp). For the m
 - If taken is unknown (`takenunknown=1` or value starting `0000-`), fall back to the upload/posted date, else `{{Unknown|date}}`.
 - `flickr.photos.getInfo` also reports `takengranularity`: 0 = full datetime, 4 = year, 6 = year+month, 8 = circa. Render granular dates as `YYYY`, `Month YYYY`, or `{{Other date|ca|YYYY}}`.
 - ⚠️ **`date_taken` is often just the upload date.** When an uploaded file has no EXIF capture date, Flickr sets `date_taken` to the upload time — a 2007 photo can legitimately report `2009`. Before trusting it, cross-check `dates.taken` vs `dates.posted` on `getInfo`, and inspect the EXIF of the downloaded file for `DateTimeOriginal` (a lone `DateTime` tag is *not* a capture stamp). When the capture date is not trustworthy, re-derive the year from the owner's own **tags/albums** (`flickr.photos.getAllContexts` + `getInfo` tags) and render `YYYY` or `YYYY-MM` — never a full invented day. See `references/flickr-download-and-date-pitfalls.md`.
-- Event/location date templates (e.g. `{{Tokyophoto|2024-05-12 15:07}}`, `{{Kyotophoto}}`, `{{Japanphoto}}`) are allowed for the `date` field ‚Äî see `references/flickr-to-commons.md` for the list from Commons' `Category:Time, date and calendar templates`.
+- Event/location date templates (e.g. `{{Tokyophoto|2024-05-12 15:07}}`, `{{Kyotophoto}}`, `{{Japanphoto}}`) are allowed for the `date` field — see `references/flickr-to-commons.md` for the list from Commons' `Category:Time, date and calendar templates`.
 
 ## flickr2commons-style descriptions
 
@@ -104,7 +104,7 @@ The production `{{Information}}` style (from flickr2commons/flinfo) is richer th
 | Author      = [https://www.flickr.com/people/65847118@N06 Maarten Heerlien] from Voorschoten, The Netherlands
 | Permission  =
 | other_versions=
-|other_fields=  {{Information field|name=Flickr tags|value={{Flickr Tags |Japan|Êó•Êú¨|Tokyo|Êù±‰∫¨}}}}
+|other_fields=  {{Information field|name=Flickr tags|value={{Flickr Tags |Japan|日本|Tokyo|東京}}}}
 }}
 {{Location dec|35.697886|139.784972|source:Flickr_region:JP_scale:5000}}
 ```
@@ -113,10 +113,21 @@ Rules (full details in `references/flickr-to-commons.md`):
 
 - **Description**: `{{en|1=<description>}}` when present. When tags are the only info, use `{{Information field|name=Flickr tags|value={{Flickr Tags |<tag1>|<tag2>}}}}` and leave `Description` empty.
 - **Author**: `[https://www.flickr.com/people/<nsid|path_alias>/ <realname|username>]`; append ` from <location>` when `photo.owner.location` exists (needs `flickr.photos.getInfo`/`people.getInfo`). Prefer realname over username over NSID.
-- **Source**: linked photo page, or `{{Flickr|1=<photo_url>}}`.
+- **Source**: built in the upload template from the hardcoded NSID + the per-file `id`/`title` variables:
+  `[https://www.flickr.com/photos/<nsid>/${id}/ ${title}]` — never the account alias/username, and not a
+  per-row URL column (the NSID appears once, in the template). NSID-form sources keep uploads findable via
+  `insource:"flickr.com/photos/<nsid>"`, the same pattern used to dedupe the account. Only give a row an
+  explicit `source` URL when its title is nonsensical (e.g. `IMG_1234`), via
+  `<#if source ? has_content>${source}<#else>[https://www.flickr.com/photos/<nsid>/${id}/ ${title}]</#if>`.
 - **Geo**: `{{Location dec|<lat>|<lon>|source:Flickr}}` after the `{{Information}}` block.
 - **Safety**: convert `<a href="...">label</a>` to `[href label]`; replace stray `|` with `{{!}}` so the template doesn't split.
 - **License header**: `=={{int:license-header}}==` + license template + `{{Flickrreview}}`.
+- **`{{Flickrreview}}` tag**: the tag exists on Commons (`Template:Flickrreview`) and is part of
+  every flickr2commons-style upload — place it on its own line directly below the license
+  template(s). Bare `{{Flickrreview}}` flags the file as needing a Flickr license review; once a
+  reviewer signs it (`{{Flickrreview|user|date}}`), it records who verified the license and moves
+  the file into a "Flickr images reviewed" category. It also checks that the file's SDC
+  statements (source P7482, copyright status P6216, creator P170, inception P571) are present.
 
 ## Commons account categories (whole-account transfers)
 
@@ -124,7 +135,7 @@ A whole-account transfer should land under a **per-account category** on Commons
 discoverable and future transfers can be deduplicated against them. Two production patterns
 (see `references/flickr-to-commons.md` for full details):
 
-**Organization / event account** ‚Äî e.g. `Category:Photographs by Festival Salon`:
+**Organization / event account** — e.g. `Category:Photographs by Festival Salon`:
 ```
 {{Flickr user category |id=31980831@N04|cat=p}}
 [[Category:Photographs by Flickr photographer]]
@@ -133,7 +144,7 @@ discoverable and future transfers can be deduplicated against them. Two producti
 The subject category links to the Wikidata item, which holds the `Flickr user ID` property
 (e.g. [Q3070609](https://www.wikidata.org/wiki/Q3070609) for Festival Salon).
 
-**Photographer account** ‚Äî e.g. `Category:Photographs by Anne Barth`:
+**Photographer account** — e.g. `Category:Photographs by Anne Barth`:
 ```
 {{Hiddencat}}
 [[Category:Anne Barth]]
@@ -149,31 +160,32 @@ Before building the manifest for an account you have transferred before, exclude
 Commons:
 
 - **SPARQL first** (strongest signal): query the Commons Query Service for files by this
-  photographer. Match the `creator` (P170) statement by **author name string** (P2093) ‚Äî the
+  photographer. Match the `creator` (P170) statement by **author name string** (P2093) — the
   broader net, since uploads with a plain-text (non-hyperlink) author in `{{Information}}` only
-  record the name string ‚Äî and by **Flickr user ID** (P3267) for the precise subset where the
+  record the name string — and by **Flickr user ID** (P3267) for the precise subset where the
   author was a link. Pull the original Flickr URL via the `origin of the file` (P7482/P973)
-  statement ‚Äî see `references/flickr-to-commons.md` for the queries and the
+  statement — see `references/flickr-to-commons.md` for the queries and the
   [wikimedia-commons-sdc](../wikimedia-commons-sdc/SKILL.md) skill for the underlying
   structured-data model.
 - If `Category:Photographs by <account>` exists, list its files and compare photo ids against the
   photoset (the photo id is kept in every Commons filename: `Title (<id>).jpg`).
 - Commons search: `Special:Search` with `insource:"flickr.com/photos/<nsid>"` finds files whose
-  `{{Information}}` source or `{{Flickr}}` template links back to the account.
+  `{{Information}}` source or `{{Flickr}}` template links back to the account — which is why new
+  uploads keep the NSID form in `Source` (see the flickr2commons-style descriptions below).
 - Confirm a single file with `intitle:"<photo id>"`.
 
-Drop already-transferred photos from the manifest (or report them separately) ‚Äî do not re-upload.
+Drop already-transferred photos from the manifest (or report them separately) — do not re-upload.
 For the files you do upload, add the account category to each row's `categories` column
 (semicolon-separated), e.g. `Photographs by Festival Salon;Salon Festival international de musique
 de chambre de Provence`.
 
-## SOP: Flickr ‚Üí pattypan manifest ‚Üí .xls
+## SOP: Flickr → pattypan manifest → .xls
 
 ### 1. Determine the source
-Photoset id (requires owner NSID), a search query, or a user NSID. Use the user's convention when a local script already exists in the working directory ‚Äî reuse it rather than rewriting.
+Photoset id (requires owner NSID), a search query, or a user NSID. Use the user's convention when a local script already exists in the working directory — reuse it rather than rewriting.
 
 ### 2. Fetch and filter
-List all photos, paginating fully, with the extras above. **Drop non-free licenses** unless the user explicitly says otherwise. Keep the photo id ‚Äî it must stay in the Commons filename for later Flickr‚ÜîCommons matching.
+List all photos, paginating fully, with the extras above. **Drop non-free licenses** unless the user explicitly says otherwise. Keep the photo id — it must stay in the Commons filename for later Flickr↔Commons matching.
 
 ### 3. Build the manifest (recommended: bundled script)
 
@@ -192,7 +204,7 @@ python scripts/fetch_flickr.py --search "re:publica 26" --user 36976328@N04 --ou
 python scripts/fetch_flickr.py --search "Tokyophoto" --license 4,5,9,10 --tags-fallback --json --out files.json
 ```
 
-Manifest columns: `path` (largest image URL), `name` (`Sanitized Title (<id>).jpg`), `description` (`{{en|1=...}}`), `date`, `author`, `source`, `permission`, `license`, `categories` (empty ‚Äî fill per subject/event).
+Manifest columns: `path` (largest image URL), `name` (`Sanitized Title (<id>).jpg`), `id`, `title`, `description` (`{{en|1=...}}`), `date`, `categories` (empty — fill per subject/event). Constants — NSID, author, license, permission — belong in the upload template, not the sheet. Add a `source` column only when some titles are nonsensical and need an explicit Flickr URL.
 
 ### 4. Produce the `.xls` with the pattypan skill
 
@@ -227,15 +239,15 @@ notes. The robust pattern:
 
 ## Guardrails
 
-1. **Read-only only.** This skill never uses OAuth, never uploads, never deletes ‚Äî it fetches metadata and prepares spreadsheets. Don't implement write flows.
-2. **Never fabricate metadata.** Unknown author/source/date ‚Üí blank or flagged, never invented. (See [wikimedia-commons](../wikimedia-commons/SKILL.md) for attribution/naming rules.)
+1. **Read-only only.** This skill never uses OAuth, never uploads, never deletes — it fetches metadata and prepares spreadsheets. Don't implement write flows.
+2. **Never fabricate metadata.** Unknown author/source/date → blank or flagged, never invented. (See [wikimedia-commons](../wikimedia-commons/SKILL.md) for attribution/naming rules.)
 3. **Filter non-free licenses** (anything outside `4,5,7,8,9,10,11,12`). Never map an NC/ND/ARR license to a Commons template.
-4. **Keep the photo id in the filename** (`Title (12345678901).jpg`) ‚Äî the re:publica/UX Brighton coverage workflows rely on it for Commons‚ÜîFlickr matching.
-5. **Follow pattypan filename rules** (from the [pattypan](../pattypan/SKILL.md) skill): no `# < > [ ] | { }`, no `:` in names, avoid camera prefixes (`DSC_`, `IMG`, ‚Ä¶), ‚â§ 240 bytes, allowed extensions.
-6. **Dates as text** in `YYYY-MM-DD HH:MM:SS` ‚Äî don't let Excel/pattypan reinterpret them.
+4. **Keep the photo id in the filename** (`Title (12345678901).jpg`) — the re:publica/UX Brighton coverage workflows rely on it for Commons↔Flickr matching.
+5. **Follow pattypan filename rules** (from the [pattypan](../pattypan/SKILL.md) skill): no `# < > [ ] | { }`, no `:` in names, avoid camera prefixes (`DSC_`, `IMG`, …), ≤ 240 bytes, allowed extensions.
+6. **Dates as text** in `YYYY-MM-DD HH:MM:SS` — don't let Excel/pattypan reinterpret them.
 7. **Categories come from the user/event**, not invented. Join with `;` for the pattypan `categories` column.
-8. **Escaping**: `| { }` in description/source text ‚Üí `&#124;` / `&#123;` / `&#125;` so the `{{Information}}` template and FreeMarker don't break.
-9. **Account category + dedupe**: for a whole-account transfer, use a `Category:Photographs by <account>` on Commons (see the account-category patterns above) and exclude files already transferred (`insource:"flickr.com/photos/<nsid>"` or the account category listing) ‚Äî never re-upload what's already there.
+8. **Escaping**: `| { }` in description/source text → `&#124;` / `&#123;` / `&#125;` so the `{{Information}}` template and FreeMarker don't break.
+9. **Account category + dedupe**: for a whole-account transfer, use a `Category:Photographs by <account>` on Commons (see the account-category patterns above) and exclude files already transferred (`insource:"flickr.com/photos/<nsid>"` or the account category listing) — never re-upload what's already there.
 
 ## References and assets
 
@@ -244,7 +256,7 @@ notes. The robust pattern:
 | `references/flickr-api.md` | Read-only API reference: full method table, extras, pagination, error codes, rate limits |
 | `references/flickr-to-commons.md` | flickr2commons/flinfo patterns: `{{Information}}` construction, date templates (`Category:Time, date and calendar templates`), license map, filename generation, attribution |
 | `references/flickr-download-and-date-pitfalls.md` | Field notes: staticflickr download rate limits, resumable-pass downloader, and the `date_taken`-as-upload-date pitfall with EXIF verification |
-| `scripts/fetch_flickr.py` | Fetch + normalize photoset/search ‚Üí pattypan manifest (stdlib-only) |
+| `scripts/fetch_flickr.py` | Fetch + normalize photoset/search → pattypan manifest (stdlib-only) |
 | `assets/sample-information-template.wikitext` | Starter `{{Information}}` template with `${var}` placeholders for the pattypan Template sheet |
 
 ## Scripts

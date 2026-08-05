@@ -49,6 +49,13 @@ Optional/recommended headers, matching template variables:
   automatically when it generates a spreadsheet).
 - `date` — capture date; pattypan can auto-fill it from EXIF.
 
+The Data sheet is a **variable overview**: `path`, `name`, and the columns that
+actually differ per file (`id`, `title`, `description`, `date`, ...). Constants
+identical for every file - a photographer's NSID inside source/author URLs, the
+license, `Permission` - belong in the Template sheet, not in repeated cells.
+Column names and template variables are freely chosen and don't have to mirror
+any sample; they only need to match each other (case-sensitive, see 2.3).
+
 ### 2.2 Data rows (row 1..N)
 
 - One file per row.

@@ -27,8 +27,12 @@ Historical output from a tags-only Tokyo photowalk upload:
   info available, put them in an `Information field` instead:
   `{{Information field|name=Flickr tags|value={{Flickr Tags |<tag1>|<tag2>|...}}}}`
   (pipe-separated, no spaces inside the template) and leave `Description` empty.
-- **Source**: linked photo page `[https://www.flickr.com/photos/<owner>/<id>/ <title>]`, or the
-  `{{Flickr|1=<photo_url>}}` template.
+- **Source**: built in the upload template from the hardcoded NSID + the per-file `id`/`title` variables:
+  `[https://www.flickr.com/photos/<nsid>/${id}/ ${title}]` (the account's NSID, never its alias/username), or
+  the `{{Flickr|1=<photo_url>}}` template. The spreadsheet only carries `id`/`title` — the NSID appears once,
+  in the template, not in a repeated per-row URL column. Uploads whose source keeps the NSID form stay findable
+  with `insource:"flickr.com/photos/<nsid>"`, the same search used to dedupe the account. Only add an explicit
+  per-row `source` URL when the title is nonsensical (e.g. `IMG_1234`).
 - **Date**: from `photo.dates.taken` with `takengranularity`:
   - 0 (full datetime): raw `YYYY-MM-DD HH:MM:SS`;
   - 4 (year only): `YYYY`;
@@ -210,7 +214,9 @@ then search:
    the filenames (`Title (<id>).jpg`).
 3. **`insource:` search**: `Special:Search` with `insource:"flickr.com/photos/<nsid>"` returns
    every file whose `{{Information}}` source or `{{Flickr}}` template links to the account — this
-   catches files uploaded even without the account category.
+   catches files uploaded even without the account category. It only works because uploads keep the
+   NSID form in their source URL (see field construction above) — an alias-based or `flic.kr` source
+   would be invisible to this search.
 4. **Single-file confirmation**: `intitle:"<photo id>"` confirms one specific photo.
 
 Exclude matches from the manifest (or list them separately); the batch upload should only contain
