@@ -27,7 +27,7 @@ to tool development.
 
 | Document | URL | Relevance |
 |----------|-----|-----------|
-| **Toolforge privacy policy** | [wikitech:Portal:Toolforge/Privacy](https://wikitech.wikimedia.org/wiki/Portal:Toolforge/Privacy) | Privacy requirements for tools hosted on Toolforge |
+| **Toolforge privacy policy** | [wikitech:Portal:Toolforge/Privacy](https://foundation.wikimedia.org/wiki/Policy:Privacy_policy) | Privacy requirements for tools hosted on Toolforge |
 | **Access to nonpublic data** | [meta:Access to nonpublic personal data policy](https://meta.wikimedia.org/wiki/Access_to_nonpublic_personal_data_policy) | Who can access nonpublic data and under what conditions |
 | **Suppression policy** | [meta:Suppression](https://meta.wikimedia.org/wiki/Suppression) | What suppressed revisions are and how they're handled |
 

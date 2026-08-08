@@ -1,0 +1,41 @@
+name: Skill Verification
+
+on:
+  pull_request:
+    paths:
+      - '.claude/skills/**'
+      - 'scripts/verify-*.py'
+      - 'scripts/refresh-*.py'
+      - 'scripts/command-registry.json'
+      - 'scripts/api-surface.json'
+      - 'scripts/url-registry.json'
+  push:
+    branches: [main]
+    paths:
+      - '.claude/skills/**'
+      - 'scripts/verify-*.py'
+      - 'scripts/refresh-*.py'
+      - 'scripts/command-registry.json'
+      - 'scripts/api-surface.json'
+      - 'scripts/url-registry.json'
+  workflow_dispatch:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: CLI commands match ground-truth registry
+        run: python3 scripts/verify-commands.py
+      - name: Action API calls match ground-truth module surface
+        run: python3 scripts/verify-api.py
+      - name: Links, depends_on, and URL registry status
+        run: python3 scripts/verify-links.py
+      - name: Code snippets are syntactically valid
+        run: python3 scripts/verify-snippets.py
+      - name: last_verified freshness
+        run: python3 scripts/verify-freshness.py

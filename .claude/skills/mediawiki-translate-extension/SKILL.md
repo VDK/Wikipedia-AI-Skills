@@ -702,8 +702,8 @@ The Translate extension uses **translation memory** (TM) to suggest translations
 ### Debugging Translation Status
 
 ```bash
-# Check if a page is translatable and get its message group
-curl -s "https://meta.wikimedia.org/w/api.php?action=query&prop=translationinfo&titles=AvoinGLAM/Past%20activities&format=json" \
+# Check a page's translation state (does a /lang subpage exist?) via page info
+curl -s "https://meta.wikimedia.org/w/api.php?action=query&prop=info&titles=AvoinGLAM/Past%20activities&format=json" \
   -H "User-Agent: MyTool/1.0"
 ```
 

@@ -259,7 +259,7 @@ if diffsize < 50:
     change_type = "minor_tweak"       # Very small change
 elif net < 0 and abs(net) > diffsize * 0.7:
     change_type = "deletion_heavy"    # >70% of churn is removal
-elif diff size > 0 and net > diffsize * 0.7:
+elif diffsize > 0 and net > diffsize * 0.7:
     change_type = "addition_heavy"    # >70% of churn is addition
 elif diffsize > 1000 and abs(net) < diffsize * 0.3:
     change_type = "replacement"       # High churn, low net = content swapped

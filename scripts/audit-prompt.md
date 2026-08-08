@@ -49,7 +49,7 @@ For **each** skill in your batch, produce this JSON structure:
     "missing_topics": ["gaps"],
     "redundant_content": ["duplicates"]
   },
-  "correctness_issues": ["factual errors, outdated APIs, wrong URLs"],
+  "correctness_issues": ["factual errors, outdated APIs, wrong URLs — each MUST be grounded in the command/API/URL registries or live tool output; unverifiable claims go here as UNVERIFIED"],
   "conciseness": {
     "score": "poor|fair|good|excellent",
     "issues": ["verbose sections"]
@@ -63,6 +63,20 @@ Also produce a **cross-reference matrix** showing which skills reference which w
 your batch, using ✓ for existing links, ✗ for missing, and ← for "should reference".
 
 **IMPORTANT:** Read each file with the read tool. Don't guess. Produce valid JSON.
+
+**Anti-hallucination grounding:** LLM knowledge about CLI commands, API modules,
+and URLs is unreliable — the exact failure mode that produced `toolforge tools
+create` and `action=templatestyles` in earlier audits. Every `correctness_issue`
+**must** be grounded in one of:
+
+- `scripts/command-registry.json` / `scripts/api-surface.json` / `scripts/url-registry.json`
+  (run `python3 scripts/verify-commands.py` etc. and cite their output), or
+- live `--help` / API responses you actually ran (cite the command), or
+- a URL in the official docs whose content you fetched and read.
+
+Anything you cannot ground this way is `UNVERIFIED` — never "looks correct".
+Do not assert a command, module, or URL exists from memory; mark it UNVERIFIED
+so a human or the ground-truth verifiers can check it.
 
 ## Phase 3: Synthesize Report
 

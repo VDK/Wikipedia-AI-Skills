@@ -301,36 +301,45 @@ defined in [`.claude/guidelines/script-audit-guidelines.md`](.claude/guidelines/
 
 See the [full guidelines](.claude/guidelines/script-audit-guidelines.md) for the pre-commit hook, CI workflow templates, and checklist for new scripts.
 
-## Command verification against ground truth
+## Ground-truth verification suite
 
-Skills document many CLI commands (`toolforge ...`, `webservice ...`, `sql ...`).
-To guard against **hallucinated commands** — plausible-looking invocations that do
-not exist in the real CLI (e.g. `toolforge tools create`, `toolforge env set`,
-`toolforge db list`) — this repo keeps a ground-truth command registry and
-verifies every skill against it:
+Skills document many CLI commands, API calls, URLs, and code snippets. To guard
+against **hallucinated content** — plausible-looking commands/modules/URLs that
+do not exist (e.g. `toolforge tools create`, `action=templatestyles`,
+`prop=translationinfo`) — this repo keeps ground-truth registries captured from
+live systems, and every skill is verified against them in CI
+(`.github/workflows/skill-verification.yml`):
 
-- **`scripts/command-registry.json`** — the verified command surface (generated,
-do not edit by hand).
-- **`scripts/refresh-command-registry.py`** — SSHs to the Toolforge bastion,
-  captures `--help` for the `toolforge` dispatcher and every sub-CLI, and
-  regenerates the registry. Run this whenever the CLI may have changed (or at
-  least every few months):
+| Check | Registry (generated) | Refresher |
+|---|---|---|
+| CLI commands (`toolforge`, `pwb.py`, `webservice`, `sql`, `become`) | `scripts/command-registry.json` | `scripts/refresh-command-registry.py` (SSH to bastion + pywikibot repo) |
+| Action API modules (`action=`/`prop=`/`list=`/`meta=`) | `scripts/api-surface.json` | `scripts/refresh-api-surface.py` (live paraminfo, enwiki+wikidata+commons) |
+| External URLs (status checked) | `scripts/url-registry.json` | `scripts/refresh-url-registry.py` (polite HEAD sweep) |
+| Links/`depends_on`/wikilinks | — (offline) | `scripts/verify-links.py` |
+| Code snippet syntax (python/bash/json/js) | — (offline) | `scripts/verify-snippets.py` |
+| `last_verified` freshness | — (offline) | `scripts/verify-freshness.py` |
 
-  ```bash
-  TOOLFORGE_USER=<your-ldap-username> python3 scripts/refresh-command-registry.py
-  ```
+Run all checks locally:
 
-- **`scripts/verify-commands.py`** — extracts every `toolforge`/`webservice`/
-  `sql`/`become` invocation from the skills and fails on any command not in the
-  registry. Runs in CI (`.github/workflows/command-verification.yml`) on every
-  PR touching skills, and warns when the registry is older than 120 days.
+```bash
+python3 scripts/verify-commands.py
+python3 scripts/verify-api.py
+python3 scripts/verify-links.py
+python3 scripts/verify-snippets.py
+python3 scripts/verify-freshness.py
+```
 
-  ```bash
-  python3 scripts/verify-commands.py
-  ```
+Refresh the registries when the underlying systems change (or every few months):
+
+```bash
+TOOLFORGE_USER=<your-ldap-username> python3 scripts/refresh-command-registry.py
+python3 scripts/refresh-api-surface.py
+python3 scripts/refresh-url-registry.py   # ~10 min, polite pacing + UA
+```
 
 Prose that *documents* removed commands ("the `toolforge tools...` family was
-removed") or error demos is automatically recognized and skipped.
+removed"), error demos, illustrative placeholder URLs, and POST-only endpoints
+is automatically recognized and skipped.
 
 ## Testing
 

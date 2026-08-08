@@ -35,9 +35,9 @@ DEFAULT_SKILLS_DIR = REPO_ROOT / ".claude" / "skills"
 
 # Binaries the verifier knows about; invocations of anything else are ignored.
 # Extend here + in the registry when new tooling is documented.
-BINARIES = ("toolforge", "webservice", "sql", "become")
+BINARIES = ("toolforge", "webservice", "sql", "become", "pwb.py")
 
-BIN_RE = re.compile(r"\b(" + "|".join(BINARIES) + r")\s+([a-z][a-z-]*)")
+BIN_RE = re.compile(r"\b(" + "|".join(BINARIES) + r")\s+([a-z][a-z0-9_-]*)")
 
 # Lines in these contexts document *removals/failures*, not instructions.
 REMOVAL_CONTEXT = re.compile(

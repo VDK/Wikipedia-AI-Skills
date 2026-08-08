@@ -268,7 +268,7 @@ data = {"rev_id": 123456789, "lang": "en"}
 | `0.3 – 0.7` | Medium risk — flag for human review |
 | `> 0.7` | High risk — escalate (tag, auto-revert if confident) |
 
-Calibrate thresholds to your tool's precision/recall requirements. The model card provides precision-recall curves: [Language-agnostic revert risk model card](https://meta.wikimedia.org/wiki/Machine_learning_models/Language-agnostic_revert_risk).
+Calibrate thresholds to your tool's precision/recall requirements. The model card provides precision-recall curves: [Language-agnostic revert risk model card](https://meta.wikimedia.org/wiki/Machine_learning_models/Production/Language-agnostic_revert_risk).
 
 > 🎮 **Try it:** `python3 assets/patrol_simulator.py Albert_Einstein` — simulates patrolling the latest edit and produces a verdict.
 
@@ -652,12 +652,12 @@ Models in the "experimental" Kubernetes namespace are only accessible from WMF p
 
 | Model | Model Card |
 |-------|------------|
-| Language-agnostic revert risk | [Model card](https://meta.wikimedia.org/wiki/Machine_learning_models/Language-agnostic_revert_risk) |
-| Multilingual revert risk | [Model card](https://meta.wikimedia.org/wiki/Machine_learning_models/Multilingual_revert_risk) |
-| RevertRisk Wikidata | [Model card](https://meta.wikimedia.org/wiki/Machine_learning_models/RevertRisk_Wikidata) |
-| Outlink-based article topic | [Model card](https://meta.wikimedia.org/wiki/Machine_learning_models/Language_agnostic_link-based_article_topic_model) |
+| Language-agnostic revert risk | [Model card](https://meta.wikimedia.org/wiki/Machine_learning_models/Production/Language-agnostic_revert_risk) |
+| Multilingual revert risk | [Model card](https://meta.wikimedia.org/wiki/Machine_learning_models/Production/Multilingual_revert_risk) |
+| RevertRisk Wikidata | [Model card](https://meta.wikimedia.org/wiki/Machine_learning_models/Production/RevertRisk_Wikidata) |
+| Outlink-based article topic | [Model card](https://meta.wikimedia.org/wiki/Machine_learning_models/Production/Language_agnostic_link-based_article_topic) |
 | Article descriptions | [Model cards (description generation)](https://meta.wikimedia.org/wiki/Machine_learning_models) |
-| Logo detection | [Model card](https://meta.wikimedia.org/wiki/Machine_learning_models/Logo_detection) |
+| Logo detection | [Model card](https://meta.wikimedia.org/wiki/Machine_learning_models/Production/gogologo) |
 
 ---
 

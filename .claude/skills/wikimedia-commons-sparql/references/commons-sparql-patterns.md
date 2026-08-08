@@ -1,6 +1,6 @@
 # Commons SPARQL Query Patterns Reference
 
-> This reference covers Commons-specific SPARQL patterns. For general SPARQL syntax and Wikidata Query Service patterns, see the [wikidata skill](../wikidata/SKILL.md) and its [references](../wikidata/references/).
+> This reference covers Commons-specific SPARQL patterns. For general SPARQL syntax and Wikidata Query Service patterns, see the [wikidata skill](../../wikidata/SKILL.md) and its [references](../../wikidata/references/).
 
 ---
 

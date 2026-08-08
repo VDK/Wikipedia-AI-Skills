@@ -297,7 +297,7 @@ WP:BAREURL. Convert them to proper citations:
 
 - **[reFill](https://refill.toolforge.org/)** — Expands bare URLs to full citations
   by fetching page metadata. Runs on Toolforge.
-- **[Citation Bot](https://citation-bot.toolforge.org/)** — Adds DOI metadata,
+- **[Citation Bot](https://citations.toolforge.org/)** — Adds DOI metadata,
   archive links, and fills in missing fields automatically.
 - **[WP:REFLINKS](https://en.wikipedia.org/wiki/Wikipedia:REFLINKS)** —
   Browser-based tool for expanding bare references.

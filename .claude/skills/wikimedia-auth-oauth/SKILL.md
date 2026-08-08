@@ -1,7 +1,7 @@
 ---
 name: wikimedia-auth-oauth
 description: Authenticate Wikimedia API clients for editing, patrol, upload, and user-specific operations — OAuth 1.0a/2.0 flows, bot passwords, CSRF tokens, permission checks, and secure credential storage for standalone tools and web apps
-depends_on: [wikimedia-api-access, wikimedia-error-handling, wikimedia-toolforge]
+depends_on: [wikimedia-api-access, wikipedia-error-handling, wikimedia-toolforge]
 license: MIT
 compatibility: opencode
 skill_discovery_hints:

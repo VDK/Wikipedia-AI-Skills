@@ -236,13 +236,14 @@ The sanitizer allows most common layout, typography, and visual properties. Key 
 
 ### Checking the Sanitizer
 
-To see the exact allowlist for your wiki:
+To see the exact allowlist for your wiki, inspect the TemplateStyles source:
+<https://gitlab.wikimedia.org/repos/mediawiki/extensions/TemplateStyles/-/blob/master/src/TemplateStylesMatcherFactory.php>
 
-```
-GET https://meta.wikimedia.org/w/api.php?action=templatestyles&modules=ext.templatestyles&format=json
-```
-
-Or check the [extension.json source](https://github.com/wikimedia/mediawiki-extensions-TemplateStyles/blob/master/src/TemplateStylesMatcherFactory.php).
+> ⚠️ **There is no `action=templatestyles` API module** — TemplateStyles validates
+> CSS via the `sanitized-css` content model at save time, not through a dedicated
+> endpoint. To validate a stylesheet programmatically, edit a sandbox page with
+> `contentmodel=sanitized-css` and check for API errors (see "Validating a CSS
+> File" below).
 
 ---
 
@@ -1114,7 +1115,7 @@ If you use a disallowed property or value, the CSS rule is **silently dropped** 
 
 1. Open browser DevTools → Network tab → Find the `load.php` request for `templatestyles`
 2. Check the Response tab — invalid rules are omitted
-3. Alternatively, check the wiki's `action=templatestyles&modules=ext.templatestyles` API response for warnings
+3. Alternatively, save the CSS to a sandbox page as `sanitized-css` and read the API error response — invalid rules are reported there
 
 ### Flagged Properties
 
@@ -1184,11 +1185,23 @@ print(f'TemplateStyles modules: {ts}' if ts else 'No TemplateStyles found')
 
 ### Validating a CSS File
 
-Use the templatestyles Action API module (if available on the wiki):
+There is no `action=templatestyles` endpoint — validate CSS by saving it to a
+sandbox page as `sanitized-css`. A successful edit means it passed TemplateStyles
+validation; an API error returns the validation failure:
 
 ```bash
-curl -s "https://meta.wikimedia.org/w/api.php?action=templatestyles&modules=ext.templatestyles&format=json&text=.my-class%20%7B%20color%3A%20red%3B%20%7D" \
-  -H "User-Agent: MyTool/1.0" | python3 -m json.tool
+# 1. Get a CSRF token
+TOKEN=$(curl -s "https://meta.wikimedia.org/w/api.php?action=query&meta=tokens&type=csrf&format=json" \
+  -H "User-Agent: MyTool/1.0" | python3 -c "import sys,json; print(json.load(sys.stdin)['query']['tokens']['csrftoken'])")
+# 2. Save your CSS as sanitized-css (edit a sandbox page; API error = validation failure)
+curl -s -X POST "https://meta.wikimedia.org/w/api.php" \
+  -H "User-Agent: MyTool/1.0" \
+  --data-urlencode "action=edit" \
+  --data-urlencode "title=User:YourName/sandbox/styles.css" \
+  --data-urlencode "text=.my-class { color: red; }" \
+  --data-urlencode "contentmodel=sanitized-css" \
+  --data-urlencode "token=$TOKEN" \
+  --data-urlencode "format=json" | python3 -m json.tool
 ```
 
 ### Visual Debugging
@@ -1204,8 +1217,8 @@ Use your browser's **Inspect Element** on the rendered page. TemplateStyles clas
 | TemplateStyles extension page | [mediawiki.org/wiki/Extension:TemplateStyles](https://www.mediawiki.org/wiki/Extension:TemplateStyles) |
 | Help:TemplateStyles | [mediawiki.org/wiki/Help:TemplateStyles](https://www.mediawiki.org/wiki/Help:TemplateStyles) |
 | Allowed CSS properties (source) | [github.com/wikimedia/mediawiki-extensions-TemplateStyles](https://github.com/wikimedia/mediawiki-extensions-TemplateStyles) |
-| CSS sanitizer source | [github.com/wikimedia/mediawiki-extensions-TemplateStyles/blob/master/src/TemplateStylesMatcherFactory.php](https://github.com/wikimedia/mediawiki-extensions-TemplateStyles/blob/master/src/TemplateStylesMatcherFactory.php) |
-| TemplateStyles usage on Meta | [meta.wikimedia.org/wiki/Category:Templates_with_TemplateStyles](https://meta.wikimedia.org/wiki/Category:Templates_with_TemplateStyles) |
+| CSS sanitizer source | [github.com/wikimedia/mediawiki-extensions-TemplateStyles/blob/master/src/TemplateStylesMatcherFactory.php](https://gitlab.wikimedia.org/repos/mediawiki/extensions/TemplateStyles/-/blob/master/src/TemplateStylesMatcherFactory.php) |
+| TemplateStyles usage on Meta | [meta.wikimedia.org/wiki/Category:Templates_with_TemplateStyles](https://en.wikipedia.org/wiki/Category:Templates_using_TemplateStyles) |
 | Skill: Templates | [wikipedia-templates](../wikipedia-templates/SKILL.md) |
 | Skill: Navigation | [mediawiki-page-navigation](../mediawiki-page-navigation/SKILL.md) |
 | Skill: Translate extension | [mediawiki-translate-extension](../mediawiki-translate-extension/SKILL.md) |

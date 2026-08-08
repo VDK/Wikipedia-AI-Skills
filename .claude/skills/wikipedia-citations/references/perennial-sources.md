@@ -380,7 +380,7 @@ These tools help you find, generate, verify, and fix citations:
 | **[Citation bot](https://en.wikipedia.org/wiki/User:Citation_bot)** | Expands partial citations, adds DOIs, identifiers, archive links | Fleshing out existing citations; batch processing |
 | **[reFill](https://refill.toolforge.org/)** | Expands bare URLs on a page into full citation templates | Cleaning up many bare URLs at once |
 | **[ProveIt](https://en.wikipedia.org/wiki/Wikipedia:ProveIt)** | User script with visual citation editor | Interactive citation building |
-| **[Web2Cit](https://www.mediawiki.org/wiki/Web2Cit)** | Community-driven citation mapping for sites Zotero misses | Sites without existing translators |
+| **[Web2Cit](https://meta.wikimedia.org/wiki/Web2Cit)** | Community-driven citation mapping for sites Zotero misses | Sites without existing translators |
 | **`scripts/citoid-expand.sh`** (this skill) | CLI tool using Citoid API | Automation/scripting |
 | **`assets/citoid_fetcher.py`** (this skill) | Python library using Citoid API | Programmatic batch processing |
 
@@ -421,7 +421,7 @@ These tools help you find, generate, verify, and fix citations:
 
 ## Cross-References (Within This Skill Set)
 
-- **[Source Reliability Guide](../wikipedia-en-biography-writing/references/policies.md)** (biography-writing skill) — Higher-level guide for BLP, NPOV, and Verifiability with a condensed reliability table
+- **[Source Reliability Guide](../../wikipedia-en-biography-writing/references/policies.md)** (biography-writing skill) — Higher-level guide for BLP, NPOV, and Verifiability with a condensed reliability table
 - **[Maintenance Templates](maintenance-templates.md)** — Full catalog of citation issue templates with usage guidance
 - **[Tools Decision Guide](tools-decision-guide.md)** — Flowchart and tool comparison for citation workflows
 - **[Fetch Contexts](fetch-contexts.md)** — Where metadata fetching happens (local vs WMF servers vs Toolforge vs IA)

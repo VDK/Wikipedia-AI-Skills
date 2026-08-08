@@ -5,7 +5,8 @@ command ground-truth registry used by scripts/verify-commands.py.
 This is the "manual testing" step, reduced to one command. Run it whenever the
 Toolforge CLI might have changed (new toolforge-* binaries, subcommand renames)
 or at least every few months. It SSHs to the bastion and records `--help`
-output for the `toolforge` dispatcher and every sub-CLI.
+output for the `toolforge` dispatcher and every sub-CLI, plus the pywikibot
+script list from the official docs (pwb.py is not installed on the bastion).
 
 Usage:
     python3 scripts/refresh-command-registry.py
@@ -23,6 +24,7 @@ import re
 import subprocess
 import sys
 from pathlib import Path
+from urllib.request import Request, urlopen
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 OUT = SCRIPT_DIR / "command-registry.json"
@@ -34,6 +36,11 @@ bastion = os.environ.get("TOOLFORGE_BASTION") or (
 # Binaries that exist on the bastion but take positional args (no subcommands).
 # Included for existence verification only.
 STANDALONE_BINARIES = ("webservice", "sql", "become")
+
+# pwb.py is not on the bastion; its script list comes from the pywikibot
+# source repo (authoritative filenames) with the docs index as fallback.
+PYWIKIBOT_DOCS = "https://doc.wikimedia.org/pywikibot/stable/scripts/index.html"
+PYWIKIBOT_GH = "https://api.github.com/repos/wikimedia/pywikibot/contents/scripts"
 
 
 def ssh(cmd: str) -> str:
@@ -80,6 +87,34 @@ def get_version(binary: str) -> str:
     return out.strip().splitlines()[0][:80] if out.strip() else ""
 
 
+def get_pywikibot_scripts() -> list[str]:
+    """Scrape the official docs page for pwb.py script names.
+
+    The docs index lists the bot scripts but not the core helper scripts
+    (login, shell, version), which live in pywikibot/scripts/ and are invoked
+    the same way — add those explicitly.
+    """
+    ua = ("wikipedia-ai-skills-command-registry/1.0 "
+          "(https://github.com/fuzheado/Wikipedia-AI-Skills)")
+    names = []
+    try:
+        req = Request(PYWIKIBOT_GH, headers={"User-Agent": ua})
+        with urlopen(req, timeout=30) as resp:
+            files = json.loads(resp.read().decode("utf-8", "replace"))
+        names = [f["name"][:-3] for f in files if f.get("name", "").endswith(".py")]
+        print(f"  pywikibot: {len(names)} scripts from GitHub repo", file=sys.stderr)
+    except Exception as e:
+        print(f"  GitHub fetch failed ({e}); falling back to docs", file=sys.stderr)
+        req = Request(PYWIKIBOT_DOCS, headers={"User-Agent": ua})
+        with urlopen(req, timeout=30) as resp:
+            html = resp.read().decode("utf-8", "replace")
+        names = [n[:-3] for n in sorted(set(re.findall(r">([a-z][a-z0-9_-]+\.py)<", html)))]
+    # core helper scripts invoked via pwb.py but not bot scripts
+    names.extend(["login", "shell", "version", "generate_user_files",
+                  "generate_family_file", "wrapper"])
+    return sorted(set(names))
+
+
 def main() -> int:
     print(f"Capturing Toolforge CLI surface from {bastion} ...", file=sys.stderr)
 
@@ -95,11 +130,14 @@ def main() -> int:
     for sub_name in tf_commands:
         sub[sub_name] = parse_commands(ssh(f"toolforge {sub_name} --help 2>&1"))
 
+    pwb_scripts = get_pywikibot_scripts()
+    print(f"  pywikibot: {len(pwb_scripts)} scripts from {PYWIKIBOT_DOCS}", file=sys.stderr)
+
     registry = {
         "schema_version": 1,
         "generator": "scripts/refresh-command-registry.py",
         "generated_at": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
-        "source": f"ssh {bastion}",
+        "source": f"ssh {bastion} + {PYWIKIBOT_DOCS}",
         "note": ("Ground-truth command surface. Do not edit by hand; regenerate "
                  "with scripts/refresh-command-registry.py."),
         "binaries": {
@@ -107,6 +145,11 @@ def main() -> int:
                 "version": tf_version,
                 "subcommands": tf_commands,
                 "sub": sub,
+            },
+            "pwb.py": {
+                "version": "pywikibot (script list from official docs)",
+                "subcommands": pwb_scripts,
+                "sub": {},
             },
         },
     }

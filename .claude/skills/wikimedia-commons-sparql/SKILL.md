@@ -152,7 +152,7 @@ These are **not** Wikidata properties — they use the Schema.org vocabulary dir
 
 ## QLever: Practical Usage (Recommended Endpoint)
 
-QLever at `https://qlever.dev/api/wikimedia-commons` is the recommended endpoint for programmatic access. It requires **no authentication** and uses standard SPARQL over HTTP.
+QLever at `https://qlever.cs.uni-freiburg.de/api/wikimedia-commons` is a third-party endpoint for programmatic access (it redirects; if unreachable, use the official `https://commons-query.wikimedia.org/sparql`). It requires **no authentication** and uses standard SPARQL over HTTP.
 
 > ⚠️ **Prefix requirement:** QLever requires explicit PREFIX declarations. All examples below include the common prefixes. Copy-paste ready.
 

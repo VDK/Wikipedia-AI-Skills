@@ -110,7 +110,7 @@ This gives you the library. You **must** create `user-config.py` manually (see b
 ### Method 2: Repository (full installation with scripts)
 
 ```bash
-git clone https://gerrit.wikimedia.org/r/pywikibot/core.git
+git clone https://gitlab.wikimedia.org/repos/pywikibot/core
 cd core
 git submodule update --init
 pip install -r requirements.txt
@@ -428,7 +428,7 @@ Scripts are available only in **repository mode** (git clone). They are run via 
 | `replace` | Find-and-replace text across many pages | `pwb.py replace -cat:Physics "old" "new"` |
 | `add_text` | Append/prepend text to pages | `pwb.py add_text -cat:Physics -text:"{{stub}}"` |
 | `redirect` | Fix double redirects or delete broken ones | `pwb.py redirect double` |
-| `disambredir` | Fix redirects to disambiguation pages | `pwb.py disambredir -cat:Disambiguation` |
+| `solve_disambiguation` | Fix links that resolve to disambiguation pages | `pwb.py solve_disambiguation -cat:Disambiguation` |
 | `patrol` | Mark recent changes as patrolled | `pwb.py patrol -page:RecentChanges` |
 
 ### Image/File Scripts
@@ -437,7 +437,7 @@ Scripts are available only in **repository mode** (git clone). They are run via 
 |---|---|---|
 | `checkimages` | Audit recently uploaded files for description problems | `pwb.py checkimages -limit:50` |
 | `commons_information` | Add language templates to file descriptions on Commons | `pwb.py commons_information -start:File:!` |
-| `image_transfer` | Transfer images between wikis (e.g. to Commons) | `pwb.py image_transfer -from:en -to:commons` |
+| `image_transfer` | Transfer images between wikis (e.g. to Commons) | `pwb.py imagetransfer -from:en -to:commons` |
 
 ### Admin Scripts
 
@@ -584,7 +584,7 @@ uploader = commons.upload('local.jpg',
 
 ```python
 # Transfer from enwiki to Commons
-pwb.py image_transfer -from:en -to:commons \
+pwb.py imagetransfer -from:en -to:commons \
     -cat:"Category:Images" \
     -description:"My description" \
     -always
@@ -802,14 +802,14 @@ Scripts are excluded from pip installs. Use library mode: write your own script 
 | MediaWiki API cross-reference | [doc.wikimedia.org/pywikibot/stable/mwapi.html](https://doc.wikimedia.org/pywikibot/stable/mwapi.html) |
 | MW Manual: Pywikibot | [mediawiki.org/wiki/Manual:Pywikibot](https://www.mediawiki.org/wiki/Manual:Pywikibot) |
 | MW Manual: Cookbook | [mediawiki.org/wiki/Manual:Pywikibot/Cookbook](https://www.mediawiki.org/wiki/Manual:Pywikibot/Cookbook) |
-| Source code (Gerrit) | [gerrit.wikimedia.org/r/pywikibot/core](https://gerrit.wikimedia.org/r/pywikibot/core) |
+| Source code (Gerrit) | [gerrit.wikimedia.org/r/pywikibot/core](https://gitlab.wikimedia.org/repos/pywikibot/core) |
 | GitHub mirror | [github.com/wikimedia/pywikibot](https://github.com/wikimedia/pywikibot) |
 | PyPI package | [pypi.org/project/pywikibot/](https://pypi.org/project/pywikibot/) |
 | Change log | [doc.wikimedia.org/pywikibot/stable/changelog.html](https://doc.wikimedia.org/pywikibot/stable/changelog.html) |
 | PAWS (online notebook) | [paws.wmflabs.org](https://paws.wmflabs.org) |
 | Toolforge | [toolforge.org](https://toolforge.org) |
 | Bot passwords | `Special:BotPasswords` on any Wikimedia wiki |
-| User-Agent policy | [foundation.wikimedia.org/wiki/Policy:User-Agent](https://foundation.wikimedia.org/wiki/Policy:User-Agent) |
+| User-Agent policy | [foundation.wikimedia.org/wiki/Policy:User-Agent](https://foundation.wikimedia.org/wiki/Policy:Wikimedia_Foundation_User-Agent_Policy) |
 | Skill: Toolforge | [wikimedia-toolforge](../wikimedia-toolforge/SKILL.md) |
 | Skill: API access | [wikimedia-api-access](../wikimedia-api-access/SKILL.md) |
 | Skill: Wikidata | [wikidata](../wikidata/SKILL.md) |

@@ -71,7 +71,7 @@ Properties describe relationships between items or attach values to them. Each p
 | image | `P18` | Representative image | (links to a Commons file name) |
 | author | `P50` | Creator of a work | (used on books, articles, films) |
 
-> 💡 **You can explore any Q or P by visiting its page:** `https://www.wikidata.org/wiki/Q937` or `https://www.wikidata.org/wiki/P31`. The page shows labels, descriptions, aliases, statements, and sitelinks (connections to Wikipedia articles).
+> 💡 **You can explore any Q or P by visiting its page:** `https://www.wikidata.org/wiki/Q937` or `https://www.wikidata.org/wiki/Property:P31`. The page shows labels, descriptions, aliases, statements, and sitelinks (connections to Wikipedia articles).
 
 ---
 
@@ -90,7 +90,7 @@ Properties describe relationships between items or attach values to them. Each p
 | Get the image (P18) for an item | Action API (`wbgetentities`) | `https://www.wikidata.org/w/api.php` | `action=wbgetentities&ids=Q937&props=claims` → access `claims.P18[].mainsnak.datavalue.value` (Commons filename) |
 | Batch-fetch data for 50+ items | Action API (batch 50 at a time) | `https://www.wikidata.org/w/api.php` | `action=wbgetentities&ids=Q1\|Q2\|...\|Q50&props=labels\|claims` |
 | Get item edit history | Action API (`prop=revisions`) | `https://www.wikidata.org/w/api.php` | `action=query&prop=revisions&titles=Q937` |
-| Explore schema/properties visually | Browser | `https://www.wikidata.org/wiki/Q937` or `https://www.wikidata.org/wiki/P31` | — |
+| Explore schema/properties visually | Browser | `https://www.wikidata.org/wiki/Q937` or `https://www.wikidata.org/wiki/Property:P31` | — |
 
 > ⚠️ **All API calls require a descriptive `User-Agent` header.** See the **[wikimedia-api-access](../wikimedia-api-access/SKILL.md)** skill.
 

@@ -1121,7 +1121,7 @@ Build a live counter that shows edits per minute, latest edits, or bot vs. human
 | Raw Swagger spec | [stream.wikimedia.org/?spec](https://stream.wikimedia.org/?spec) |
 | Wikitech documentation | [wikitech.wikimedia.org/wiki/Event_Platform/EventStreams_HTTP_Service](https://wikitech.wikimedia.org/wiki/Event_Platform/EventStreams_HTTP_Service) |
 | Source code (GitLab) | [gitlab.wikimedia.org/repos/data-engineering/eventstreams](https://gitlab.wikimedia.org/repos/data-engineering/eventstreams) |
-| GitHub mirror | [github.com/wikimedia/eventstreams](https://github.com/wikimedia/eventstreams) |
+| GitHub mirror | [github.com/wikimedia/eventstreams](https://gitlab.wikimedia.org/repos/data-engineering/eventstreams) |
 | Pywikibot EventStreams docs | [doc.wikimedia.org/pywikibot/stable/api_ref/pywikibot.comms.html](https://doc.wikimedia.org/pywikibot/stable/api_ref/pywikibot.comms.html) |
 | `requests-sse` (PyPI) | [pypi.org/project/requests-sse](https://pypi.org/project/requests-sse/) |
 | `wikimedia-streams` (npm) | [npmjs.com/package/wikimedia-streams](https://www.npmjs.com/package/wikimedia-streams) |

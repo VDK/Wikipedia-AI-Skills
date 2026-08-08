@@ -10,7 +10,7 @@ system — 2,000+ projects organized by topic area.
 | WikiProject | Active | Assessment | Popular Pages |
 |------------|:------:|:----------:|:-------------:|
 | WikiProject Film | ✅ | [Assessment](https://en.wikipedia.org/wiki/Wikipedia:WikiProject_Film/Assessment) | [Popular](https://en.wikipedia.org/wiki/Wikipedia:WikiProject_Film/Popular_pages) |
-| WikiProject Music | ✅ | [Assessment](https://en.wikipedia.org/wiki/Wikipedia:WikiProject_Music/Assessment) | [Popular](https://en.wikipedia.org/wiki/Wikipedia:WikiProject_Music/Popular_pages) |
+| WikiProject Music | ✅ | [WikiProject page](https://en.wikipedia.org/wiki/Wikipedia:WikiProject_Music) | [Popular pages tool](https://en.wikipedia.org/wiki/Wikipedia:WikiProject_Music) |
 | WikiProject Video games | ✅ | [Assessment](https://en.wikipedia.org/wiki/Wikipedia:WikiProject_Video_games/Assessment) | [Popular](https://en.wikipedia.org/wiki/Wikipedia:WikiProject_Video_games/Popular_pages) |
 | WikiProject Literature | ✅ | [Assessment](https://en.wikipedia.org/wiki/Wikipedia:WikiProject_Literature/Assessment) | — |
 | WikiProject Visual arts | ✅ | [Assessment](https://en.wikipedia.org/wiki/Wikipedia:WikiProject_Visual_arts/Assessment) | — |
@@ -39,7 +39,7 @@ system — 2,000+ projects organized by topic area.
 
 | WikiProject | Active | Assessment | Popular Pages |
 |------------|:------:|:----------:|:-------------:|
-| WikiProject Physics | ✅ | [Assessment](https://en.wikipedia.org/wiki/Wikipedia:WikiProject_Physics/Assessment) | [Popular](https://en.wikipedia.org/wiki/Wikipedia:WikiProject_Physics/Popular_pages) |
+| WikiProject Physics | ✅ | [WikiProject page](https://en.wikipedia.org/wiki/Wikipedia:WikiProject_Physics) | [Popular](https://en.wikipedia.org/wiki/Wikipedia:WikiProject_Physics/Popular_pages) |
 | WikiProject Chemistry | ✅ | [Assessment](https://en.wikipedia.org/wiki/Wikipedia:WikiProject_Chemistry/Assessment) | — |
 | WikiProject Biology | ✅ | [Assessment](https://en.wikipedia.org/wiki/Wikipedia:WikiProject_Biology/Assessment) | — |
 | WikiProject Mathematics | ✅ | [Assessment](https://en.wikipedia.org/wiki/Wikipedia:WikiProject_Mathematics/Assessment) | [Popular](https://en.wikipedia.org/wiki/Wikipedia:WikiProject_Mathematics/Popular_pages) |
@@ -170,10 +170,10 @@ https://en.wikipedia.org/wiki/User:Community_Tech_bot/Popular_pages
 
 ## See Also
 
-- **[wikimedia-page-assessment](../wikimedia-page-assessment/SKILL.md)** — SQL
+- **[wikimedia-page-assessment](../../wikimedia-page-assessment/SKILL.md)** — SQL
   queries for bulk analysis of project assessment data via the
   `page_assessments` database table
-- **[wikipedia-page-anatomy](../wikipedia-page-anatomy/SKILL.md)** — Article
+- **[wikipedia-page-anatomy](../../wikipedia-page-anatomy/SKILL.md)** — Article
   structure overview including talk pages where banners appear
-- **[wikipedia-talk-page](../wikipedia-talk-page/SKILL.md)** — Detailed talk
+- **[wikipedia-talk-page](../../wikipedia-talk-page/SKILL.md)** — Detailed talk
   page conventions, DiscussionTools, and banner interaction
