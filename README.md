@@ -30,9 +30,9 @@ These skills are designed to **help you research, understand, and prepare conten
 
 ## Skills
 
-This repository contains **52 skills** organized into two groups.
+This repository contains **53 skills** organized into two groups.
 
-> 💡 **[Explore the interactive skills network →](docs/skills-network.html)** — see how all 52
+> 💡 **[Explore the interactive skills network →](docs/skills-network.html)** — see how all 53
 > skills connect to each other in a force-directed graph. Drag nodes, zoom, and hover
 > to discover cross-references between skills.
 
