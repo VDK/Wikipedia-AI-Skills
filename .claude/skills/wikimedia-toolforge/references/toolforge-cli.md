@@ -88,8 +88,7 @@ Quick reference for the `toolforge` CLI and related commands.
 
 | Command | Description |
 |---|---|
-| `sql <tool-name>` | Access tool's MariaDB database |
-| `toolforge db list` | List available databases |
+| `sql <database>` | Connect to wiki replicas or ToolsDB (e.g., `sql enwiki_p`). Use `sql --help` for options |
 
 ## Useful Paths
 

@@ -1,0 +1,71 @@
+{
+  "binaries": {
+    "become": {
+      "subcommands": [],
+      "version": "become: no such tool '--version'"
+    },
+    "sql": {
+      "subcommands": [],
+      "version": "usage: sql [-h] [-v] [-N] [--cluster {analytics,web}]"
+    },
+    "toolforge": {
+      "sub": {
+        "build": [
+          "cancel",
+          "clean",
+          "delete",
+          "list",
+          "logs",
+          "quota",
+          "show",
+          "start"
+        ],
+        "components": [
+          "config",
+          "deploy-token",
+          "deployment"
+        ],
+        "envvars": [
+          "create",
+          "delete",
+          "list",
+          "quota",
+          "show"
+        ],
+        "jobs": [
+          "delete",
+          "dump",
+          "flush",
+          "images",
+          "list",
+          "load",
+          "logs",
+          "quota",
+          "restart",
+          "run",
+          "show"
+        ],
+        "migrate-index": [],
+        "webservice": []
+      },
+      "subcommands": [
+        "build",
+        "components",
+        "envvars",
+        "jobs",
+        "migrate-index",
+        "webservice"
+      ],
+      "version": "Toolforge CLI, version 0.3.8"
+    },
+    "webservice": {
+      "subcommands": [],
+      "version": "Traceback (most recent call last):"
+    }
+  },
+  "generated_at": "2026-08-08T13:14:25Z",
+  "generator": "scripts/refresh-command-registry.py",
+  "note": "Ground-truth command surface. Do not edit by hand; regenerate with scripts/refresh-command-registry.py.",
+  "schema_version": 1,
+  "source": "ssh alih@login.toolforge.org"
+}

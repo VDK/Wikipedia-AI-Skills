@@ -301,6 +301,37 @@ defined in [`.claude/guidelines/script-audit-guidelines.md`](.claude/guidelines/
 
 See the [full guidelines](.claude/guidelines/script-audit-guidelines.md) for the pre-commit hook, CI workflow templates, and checklist for new scripts.
 
+## Command verification against ground truth
+
+Skills document many CLI commands (`toolforge ...`, `webservice ...`, `sql ...`).
+To guard against **hallucinated commands** — plausible-looking invocations that do
+not exist in the real CLI (e.g. `toolforge tools create`, `toolforge env set`,
+`toolforge db list`) — this repo keeps a ground-truth command registry and
+verifies every skill against it:
+
+- **`scripts/command-registry.json`** — the verified command surface (generated,
+do not edit by hand).
+- **`scripts/refresh-command-registry.py`** — SSHs to the Toolforge bastion,
+  captures `--help` for the `toolforge` dispatcher and every sub-CLI, and
+  regenerates the registry. Run this whenever the CLI may have changed (or at
+  least every few months):
+
+  ```bash
+  TOOLFORGE_USER=<your-ldap-username> python3 scripts/refresh-command-registry.py
+  ```
+
+- **`scripts/verify-commands.py`** — extracts every `toolforge`/`webservice`/
+  `sql`/`become` invocation from the skills and fails on any command not in the
+  registry. Runs in CI (`.github/workflows/command-verification.yml`) on every
+  PR touching skills, and warns when the registry is older than 120 days.
+
+  ```bash
+  python3 scripts/verify-commands.py
+  ```
+
+Prose that *documents* removed commands ("the `toolforge tools...` family was
+removed") or error demos is automatically recognized and skipped.
+
 ## Testing
 
 New contributions should include tests. The project uses `pytest` with a test suite in

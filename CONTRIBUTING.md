@@ -240,6 +240,7 @@ Before submitting a skill, verify every item:
   - Remove from "Future skill candidates" if it was listed there
   - Keep prose references to counts generic ("all skills") — hardcoded counts go stale
 - [ ] **CI will verify on push:** The `.github/workflows/skill-registration-check.yml` CI workflow checks that:
+- [ ] **Command verification:** `.github/workflows/command-verification.yml` fails the build if any `toolforge`/`webservice`/`sql`/`become` invocation in the skills is not in the ground-truth registry (`scripts/command-registry.json`). If you document a new CLI command, regenerate the registry first: `TOOLFORGE_USER=<you> python3 scripts/refresh-command-registry.py`
   - Every skill directory is linked in `README.md`
   - Every skill is mentioned in `ROADMAP.md` under Published skills
   - `conftest.py` auto-discovers all skill directories (no manual list needed)
