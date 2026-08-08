@@ -121,13 +121,7 @@ Rules (full details in `references/flickr-to-commons.md`):
   `<#if source ? has_content>${source}<#else>[https://www.flickr.com/photos/<nsid>/${id}/ ${title}]</#if>`.
 - **Geo**: `{{Location dec|<lat>|<lon>|source:Flickr}}` after the `{{Information}}` block.
 - **Safety**: convert `<a href="...">label</a>` to `[href label]`; replace stray `|` with `{{!}}` so the template doesn't split.
-- **License header**: `=={{int:license-header}}==` + license template + `{{Flickrreview}}`.
-- **`{{Flickrreview}}` tag**: the tag exists on Commons (`Template:Flickrreview`) and is part of
-  every flickr2commons-style upload — place it on its own line directly below the license
-  template(s). Bare `{{Flickrreview}}` flags the file as needing a Flickr license review; once a
-  reviewer signs it (`{{Flickrreview|user|date}}`), it records who verified the license and moves
-  the file into a "Flickr images reviewed" category. It also checks that the file's SDC
-  statements (source P7482, copyright status P6216, creator P170, inception P571) are present.
+- **License header**: `=={{int:license-header}}==` + license template + `{{Flickrreview}}` (place the tag on its own line directly below the license template — it flags the file for a Flickr license review).
 
 ## Commons account categories (whole-account transfers)
 

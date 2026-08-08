@@ -30,9 +30,9 @@ These skills are designed to **help you research, understand, and prepare conten
 
 ## Skills
 
-This repository contains **51 skills** organized into two groups.
+This repository contains **52 skills** organized into two groups.
 
-> 💡 **[Explore the interactive skills network →](docs/skills-network.html)** — see how all 51
+> 💡 **[Explore the interactive skills network →](docs/skills-network.html)** — see how all 52
 > skills connect to each other in a force-directed graph. Drag nodes, zoom, and hover
 > to discover cross-references between skills.
 
@@ -75,6 +75,7 @@ Skills are arranged from **foundational** (understanding how Wikipedia works) to
 | [wikimedia-commons-categories](.claude/skills/wikimedia-commons-categories/SKILL.md) | Create and disambiguate Wikimedia Commons categories from Wikidata data — the occupation-from-country pattern, `by name` people categories, definite-article country phrases, pluralization, existence probing, and homonym disambiguation, distilled from the production Catapult gadget |
 | [pattypan](.claude/skills/pattypan/SKILL.md) | Build pattypan upload spreadsheets (.xls) for batch Wikimedia Commons uploads — the two-sheet Data/Template format, `path`/`name` headers, template-variable matching, filename validation, and a bundled generator/validator script |
 | [flickr](.claude/skills/flickr/SKILL.md) | Fetch photos from Flickr's read-only REST API (photosets, search, metadata, tags, geo) and prepare pattypan upload manifests for batch Wikimedia Commons uploads - license filtering, flickr2commons-style descriptions, and attribution |
+| [flickr-wayback-recovery](.claude/skills/flickr-wayback-recovery/SKILL.md) | Recover a deleted or offline Flickr account from the Wayback Machine (CDX enumeration, metadata scraping, image download) and batch-upload the photos missing from Wikimedia Commons via pattypan — matched by Flickr ID |
 | | **▸ Analyzing Articles** |
 | [wikimedia-pageviews](.claude/skills/wikimedia-pageviews/SKILL.md) | Retrieve traffic and popularity statistics for Wikipedia articles using cached SQL properties (sorting/filtering) or the REST API (precise historical data) |
 | [wikimedia-page-assessment](.claude/skills/wikimedia-page-assessment/SKILL.md) | Query Wikipedia article quality (FA/GA/B/C/Start/Stub) and importance ratings from WikiProject assessment banners on any Wikimedia wiki with the PageAssessments extension |
@@ -156,6 +157,7 @@ Skills for building bots, web apps, and data pipelines on Wikimedia infrastructu
 | Add depicts/captions/copyright statements to Commons files | [wikimedia-commons-sdc](.claude/skills/wikimedia-commons-sdc/SKILL.md) |
 | Build a pattypan .xls spreadsheet for a batch Commons upload | `python3 .claude/skills/pattypan/scripts/build_pattypan_spreadsheet.py --manifest files.csv --template template.wikitext --output upload.xls` |
 | Fetch Flickr photos into a pattypan manifest for a batch Commons upload | `python3 .claude/skills/flickr/scripts/fetch_flickr.py --photoset <id> --user <nsid> --out files.csv` then `python3 .claude/skills/pattypan/scripts/build_pattypan_spreadsheet.py --manifest files.csv --template template.wikitext --output upload.xls` |
+| Recover photos from a deleted Flickr account via the Wayback Machine and upload them to Commons | [flickr-wayback-recovery](.claude/skills/flickr-wayback-recovery/SKILL.md) — `python3 .claude/skills/flickr-wayback-recovery/scripts/cdx-photo-ids.py <nsid> <alias>` then the rest of the pipeline |
 | | **▸ Analyzing Articles** |
 | Get pageview statistics — how many people read an article? | [wikimedia-pageviews](.claude/skills/wikimedia-pageviews/SKILL.md) |
 | Check article quality and WikiProject ratings (FA, GA, B, C, Start, Stub) | [wikimedia-page-assessment](.claude/skills/wikimedia-page-assessment/SKILL.md) |
