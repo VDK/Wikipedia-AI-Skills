@@ -16,10 +16,12 @@ This is the only required package to use **CSS-only components**. Additional pac
 ## Using components
 
 Two kinds: **Vue 3 components** and **CSS-only components**. Both require the compiled CSS,
-loaded once per page load:
+loaded once per page load — via JS:
 ```js
 import '@wikimedia/codex/dist/codex.style.css';
-// or
+```
+or with a plain CSS `@import`:
+```css
 @import '@wikimedia/codex/dist/codex.style.css';
 ```
 A right-to-left variant `codex.style-rtl.css` is also available.

@@ -173,13 +173,13 @@ country-scoped category already has content.
 Catapult checks every candidate with a batched `action=query`:
 
 ```js
-{
+const params = {
   action: 'query',
   prop: 'info|pageprops',
   titles: batch.join('|'),   // up to 50 titles per batch
   formatversion: 2,
   format: 'json'
-}
+};
 ```
 
 For each page: `exists` (page not missing), `redirect` (the `redirect` flag),

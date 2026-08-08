@@ -48,10 +48,12 @@ use CSS-only components. Install `@wikimedia/codex-icons` for icons and
 ```bash
 npm install @wikimedia/codex
 ```
-Load the compiled styles once per page (both usage modes need the CSS):
+Load the compiled styles once per page (both usage modes need the CSS) — via JS:
 ```js
 import '@wikimedia/codex/dist/codex.style.css';
-// or in CSS:
+```
+or with a plain CSS `@import`:
+```css
 @import '@wikimedia/codex/dist/codex.style.css';
 ```
 
