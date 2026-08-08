@@ -7,7 +7,7 @@ compatibility: opencode
 skill_discovery_hints:
   - keywords: ["authentication", "OAuth", "bot password", "login", "CSRF token", "credential"]
   - keywords: ["authorization", "access token", "refresh token", "consumer registration", "Special:BotPasswords"]
-last_verified: 2026-06-11
+last_verified: 2026-08-08
 ---
 
 > ⚠️ **User-Agent required:** All API calls below need a descriptive `User-Agent` header.
@@ -519,14 +519,14 @@ BOT_PASSWORD = os.environ.get("BOT_PASSWORD")
 
 ### On Toolforge
 
-Use `toolforge env set` to store secrets:
+Use `toolforge envvars create` to store secrets:
 
 ```bash
 # Set once
 become my-tool
-toolforge env set OAUTH_CLIENT_ID "your_consumer_key"
-toolforge env set OAUTH_CLIENT_SECRET "your_consumer_secret"
-toolforge env set OAUTH_ACCESS_TOKEN "your_stored_access_token"
+toolforge envvars create OAUTH_CLIENT_ID "your_consumer_key"
+toolforge envvars create OAUTH_CLIENT_SECRET "your_consumer_secret"
+toolforge envvars create OAUTH_ACCESS_TOKEN "your_stored_access_token"
 
 # In your code
 import os
@@ -764,7 +764,7 @@ What kind of tool are you building?
 │  └─ Owner-only OAuth 2.0 consumer
 │     → Register with "for use only by me" checked
 │     → Use client_credentials grant (no browser redirect)
-│     → Store creds via `toolforge env set`
+│     → Store creds via `toolforge envvars create`
 │
 └─ Quick test / internal script
    └─ action=login (last resort)

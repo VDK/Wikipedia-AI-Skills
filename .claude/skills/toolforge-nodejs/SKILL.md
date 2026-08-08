@@ -13,7 +13,7 @@ skill_discovery_hints:
   - keywords: ["Toolforge logs", "kubectl logs", "webservice logs", "debug", "tail logs", "toolforge debug"]
   - keywords: ["Node streaming", "buffer", "readFile", "createReadStream", "Pannellum", "XHR", "WebGL"]
   - keywords: ["Toolforge cron", "node job", "scheduled task", "cron node", "batch job"]
-last_verified: 2026-06-20
+last_verified: 2026-08-08
 ---
 
 > ⚠️ **Prerequisites:** This skill assumes you have a Toolforge account and can SSH in. See **[wikimedia-toolforge](../wikimedia-toolforge/SKILL.md)** for account setup, tool creation, and basic SSH configuration.
@@ -37,7 +37,7 @@ last_verified: 2026-06-20
 | Choose a runtime | `node22` (default), `node18` (legacy) — see SOP 1.1 |
 | Start/restart a webservice | `become <tool> webservice --backend=kubernetes node22 start` |
 | See logs | `become <tool> kubectl logs -f deployment/<tool>` |
-| Set environment variables | `become <tool> toolforge env set NAME value` |
+| Set environment variables | `become <tool> toolforge envvars create NAME value` |
 | Serve static files | Use `readFile()` with correct MIME types — see SOP 3 |
 | Add npm dependencies | Use a `package.json` and `npm install` on the tool's NFS — see SOP 5 |
 | Run a cron job | `become <tool> job schedule node22 --command 'node script.mjs' "0 * * * *"` |
@@ -61,10 +61,9 @@ The runtime image includes the operating system, Node.js binary, and basic tools
 
 ### 1.2 Create the Tool (One Time)
 
-```bash
-# From your local machine
-ssh <user>@login.toolforge.org toolforge tools create my-tool
-```
+Tool creation is **web-UI only** — the `toolforge tools ...` command family was removed
+from the Toolforge CLI in 0.3.x and has no CLI equivalent. Create the tool at
+<https://toolsadmin.wikimedia.org/tools/create>.
 
 ### 1.3 Write Your Server
 
@@ -383,15 +382,15 @@ become my-tool npm install
 
 ```bash
 # Set variables — these persist across restarts
-become my-tool toolforge env set API_KEY "sk-abc123"
-become my-tool toolforge env set NODE_ENV "production"
-become my-tool toolforge env set LOG_LEVEL "info"
+become my-tool toolforge envvars create API_KEY "sk-abc123"
+become my-tool toolforge envvars create NODE_ENV "production"
+become my-tool toolforge envvars create LOG_LEVEL "info"
 
 # List all variables
-become my-tool toolforge env list
+become my-tool toolforge envvars list
 
 # Remove a variable
-become my-tool toolforge env unset API_KEY
+become my-tool toolforge envvars delete API_KEY
 ```
 
 ### Reading Variables in Code
@@ -410,7 +409,7 @@ if (!apiKey) {
   ```bash
   become my-tool webservice --backend=kubernetes node22 restart
   ```
-- **Never hardcode secrets** in source files committed to version control. Always use `toolforge env set`.
+- **Never hardcode secrets** in source files committed to version control. Always use `toolforge envvars create`.
 
 ---
 
@@ -573,9 +572,9 @@ scp server.mjs <user>@login.toolforge.org:/data/project/my-tool/
 scp -r public/ <user>@login.toolforge.org:/data/project/my-tool/
 
 # === Environment ===
-become my-tool toolforge env set KEY value
-become my-tool toolforge env list
-become my-tool toolforge env unset KEY
+become my-tool toolforge envvars create KEY value
+become my-tool toolforge envvars list
+become my-tool toolforge envvars delete KEY
 
 # === Scheduled Jobs ===
 become my-tool job schedule node22 --command 'node script.mjs' "0 * * * *"

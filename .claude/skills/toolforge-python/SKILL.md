@@ -12,7 +12,7 @@ skill_discovery_hints:
   - keywords: ["Toolforge PORT", "gunicorn bind", "Toolforge static", "Python http server"]
   - keywords: ["Toolforge flask", "flask app", "Toolforge deploy python", "toolforge python"]
   - keywords: ["Toolforge cron python", "python job", "scheduled python", "Toolforge batch"]
-last_verified: 2026-06-22
+last_verified: 2026-08-08
 ---
 
 > ⚠️ **Prerequisites:** This skill assumes you have a Toolforge account and can SSH in. See **[wikimedia-toolforge](../wikimedia-toolforge/SKILL.md)** for account setup, tool creation, and basic SSH configuration.
@@ -53,7 +53,7 @@ last_verified: 2026-06-22
 | Choose a runtime | `python3.11` (default), `python3.9` (legacy) — see SOP 1.1 |
 | Start/restart a webservice | `become <tool> webservice --backend=kubernetes python3.11 start` |
 | See logs | `become <tool> kubectl logs -f deployment/<tool>` |
-| Set environment variables | `become <tool> toolforge env set NAME value` |
+| Set environment variables | `become <tool> toolforge envvars create NAME value` |
 | Serve static files | Use Flask's `send_from_directory()` or `static_url_path` — see SOP 3 |
 | Install dependencies | Use a virtual environment and `requirements.txt` — see SOP 4 |
 | Run a cron job | `become <tool> job schedule python3.11 --command 'python3 script.py' "0 * * * *"` |
@@ -82,8 +82,7 @@ dependencies live on NFS at `/data/project/<tool>/`.
 # From your local machine
 ssh <user>@login.toolforge.org
 
-# Create the tool (one time)
-toolforge tools create my-python-tool
+# Create the tool (web UI only: https://toolsadmin.wikimedia.org/tools/create — no CLI equivalent)
 
 # Enter the tool's home
 become my-python-tool
@@ -500,7 +499,7 @@ pip install mysqlclient
 ```
 
 ```bash
-# Set these env vars via `toolforge env set`
+# Set these env vars via `toolforge envvars create`
 DB_NAME=<name-of-db-in-toolsdb>
 DJANGO_CONFIGURATION=Production
 DJANGO_SETTINGS_MODULE=mysite.settings
@@ -708,15 +707,15 @@ Store configuration and secrets via Toolforge's environment variable system:
 ```bash
 # Set (from a become shell)
 become my-python-tool
-toolforge env set SECRET_KEY your-secret-key-here
-toolforge env set OAUTH_CLIENT_ID your-oauth-client-id
-toolforge env set FLASK_ENV production
+toolforge envvars create SECRET_KEY your-secret-key-here
+toolforge envvars create OAUTH_CLIENT_ID your-oauth-client-id
+toolforge envvars create FLASK_ENV production
 
 # List
-toolforge env list
+toolforge envvars list
 
 # Remove
-toolforge env unset OLD_VAR
+toolforge envvars delete OLD_VAR
 ```
 
 ### Accessing in Python
@@ -729,7 +728,7 @@ OAUTH_CLIENT_ID = os.environ.get('OAUTH_CLIENT_ID')
 FLASK_ENV = os.environ.get('FLASK_ENV', 'production')
 ```
 
-> ⚠️ **Never hardcode secrets** in source files. Always use `toolforge env set`
+> ⚠️ **Never hardcode secrets** in source files. Always use `toolforge envvars create`
 > and read from the environment. Toolforge's env system stores values securely
 > and they survive pod restarts.
 
@@ -880,9 +879,9 @@ source venv/bin/activate
 pip install -r requirements.txt
 
 # === Environment ===
-become my-python-tool toolforge env set KEY value
-become my-python-tool toolforge env list
-become my-python-tool toolforge env unset KEY
+become my-python-tool toolforge envvars create KEY value
+become my-python-tool toolforge envvars list
+become my-python-tool toolforge envvars delete KEY
 
 # === Scheduled Jobs ===
 become my-python-tool job schedule python3.11 \

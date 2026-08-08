@@ -6,9 +6,9 @@ compatibility: opencode
 depends_on: [wikimedia-api-access]
 skill_discovery_hints:
   - keywords: ["Toolforge", "tool hosting", "Kubernetes", "web service", "cron job", "deploy"]
-  - keywords: ["toolforge tools create", "become", "webservice", "toolforge jobs"]
+  - keywords: ["toolsadmin", "become", "webservice", "toolforge jobs"]
   - keywords: ["CDN", "cdnjs", "tools-static", "privacy-preserving CDN", "content delivery", "third-party script", "external CDN tracking"]
-last_verified: 2026-06-10
+last_verified: 2026-08-08
 ---
 
 Toolforge (formerly Wikimedia Tool Labs) is a cloud hosting platform for community-developed tools that interact with Wikimedia wikis and data. This skill covers account setup, service management, deployment, and debugging.
@@ -34,10 +34,11 @@ If successful, you will see a hostname like `tools-sgebastion-XX`. If the connec
 ### 1.2 Create a New Tool
 
 Each tool is a sub-account with its own directory, database access, and web service.
+Tool creation is **web-UI only** — the `toolforge tools ...` command family was
+removed from the Toolforge CLI in 0.3.x and has **no CLI equivalent**. Create tools at
+<https://toolsadmin.wikimedia.org/tools/create>.
 
-```bash
-ssh ${TOOLFORGE_USER:-your-username}@login.toolforge.org toolforge tools create my-tool-name
-```
+> ⏳ **Wait ~1 minute after creation** before `become` works (see Common Mistakes).
 
 **Naming rules:**
 - Lowercase letters, digits, and hyphens only
@@ -55,11 +56,9 @@ After creation, the tool's home directory is at `/data/project/my-tool-name/`.
 
 ### 1.3 Configure Tool Permissions
 
-```bash
-ssh ${TOOLFORGE_USER:-your-username}@login.toolforge.org toolforge tools maintainers add my-tool-name ${TOOLFORGE_USER:-your-username}
-```
-
-This adds you as a maintainer so you can deploy files and manage services.
+Maintainers are managed via the web UI at <https://toolsadmin.wikimedia.org/tools>
+(open the tool, then "Maintainers"). The tool's creator is a maintainer automatically.
+There is **no CLI equivalent** — `toolforge tools maintainers ...` does not exist.
 
 ## SOP 2: File Deployment
 
@@ -260,30 +259,31 @@ crontab -l
 
 ### 6.1 Set Environment Variables
 
-Toolforge provides a `set-webservice-env` command for web services:
+Set tool-scoped environment variables with `envvars create` (run as the tool):
 
 ```bash
 become my-tool-name
-toolforge env set MY_VARIABLE my_value
+toolforge envvars create MY_VARIABLE my_value
 ```
 
 ### 6.2 View Environment Variables
 
 ```bash
 become my-tool-name
-toolforge env list
+toolforge envvars list
 ```
+Values are hidden by default; add `--show-values` to display them.
 
 ### 6.3 Remove an Environment Variable
 
 ```bash
 become my-tool-name
-toolforge env unset MY_VARIABLE
+toolforge envvars delete MY_VARIABLE
 ```
 
 ### 6.4 Secrets (Database Passwords, API Keys)
 
-Store sensitive values as environment variables via `toolforge env set`. These are stored securely and not shown in `env list` output. Do not hardcode secrets in source files.
+Store sensitive values as environment variables via `toolforge envvars create`. These are stored securely and not shown in `envvars list` output by default. Do not hardcode secrets in source files.
 
 ### 6.5 MediaWiki API Authentication (Bot Passwords)
 
@@ -565,14 +565,14 @@ https://packages.ubuntu.com/noble/.
 ### Full Web App Deployment
 
 ```bash
-# 1. Create tool
-ssh user@login.toolforge.org toolforge tools create my-web-tool
+# 1. Create tool (web UI only: https://toolsadmin.wikimedia.org/tools/create)
+# No CLI equivalent — `toolforge tools` was removed in CLI 0.3.x.
 
 # 2. Deploy code
 rsync -avz ./my-web-app/ user@login.toolforge.org:/data/project/my-web-tool/
 
 # 3. Set environment variables
-ssh user@login.toolforge.org "become my-web-tool; toolforge env set API_KEY your-api-key-here"
+ssh user@login.toolforge.org "become my-web-tool; toolforge envvars create API_KEY your-api-key-here"
 
 # 4. Start web service
 ssh user@login.toolforge.org "become my-web-tool; webservice --backend=kubernetes python3.11 start"
@@ -594,8 +594,8 @@ ssh user@login.toolforge.org "become my-tool; crontab -l | { cat; echo '0 3 * * 
 ### Build Service Web App (Modern Workflow)
 
 ```bash
-# 1. Create tool
-ssh user@login.toolforge.org toolforge tools create my-build-tool
+# 1. Create tool (web UI only: https://toolsadmin.wikimedia.org/tools/create)
+# No CLI equivalent — `toolforge tools` was removed in CLI 0.3.x.
 
 # 2. Push code to a public Git repository (e.g., GitLab)
 #    Ensure a Procfile exists at the root:

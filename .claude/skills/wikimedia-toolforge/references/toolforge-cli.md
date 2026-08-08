@@ -6,13 +6,16 @@ Quick reference for the `toolforge` CLI and related commands.
 
 ## Account & Tools
 
-| Command | Description |
-|---|---|
-| `toolforge tools list` | List all tools you maintain |
-| `toolforge tools create <name>` | Create a new tool |
-| `toolforge tools delete <name>` | Delete a tool (irreversible!) |
-| `toolforge tools maintainers add <tool> <user>` | Add a maintainer to a tool |
-| `toolforge tools maintainers remove <tool> <user>` | Remove a maintainer |
+> ⚠️ **Removed in CLI 0.3.x:** the `toolforge tools ...` command family no longer
+> exists. Tool creation and maintainer management are **web-UI only** at
+> <https://toolsadmin.wikimedia.org/tools> (create: <https://toolsadmin.wikimedia.org/tools/create>).
+>
+> | Removed command (CLI ≤ 0.2.x) | Replacement |
+> |---|---|
+> | `toolforge tools list` | web UI — tool list |
+> | `toolforge tools create <name>` | web UI — no CLI equivalent |
+> | `toolforge tools delete <name>` | web UI — no CLI equivalent |
+> | `toolforge tools maintainers add/remove` | web UI — no CLI equivalent |
 
 ## Web Services
 
@@ -58,9 +61,11 @@ Quick reference for the `toolforge` CLI and related commands.
 
 | Command | Description |
 |---|---|
-| `toolforge env set <key> <value>` | Set an environment variable |
-| `toolforge env list` | List all environment variables |
-| `toolforge env unset <key>` | Remove an environment variable |
+| `toolforge envvars create <key> [<value>]` | Create/update an envvar |
+| `toolforge envvars list` | List envvars (values hidden; `--show-values` to display) |
+| `toolforge envvars delete <key>` | Delete an envvar |
+| `toolforge envvars show <key>` | Show a specific envvar |
+| `toolforge envvars quota` | Show envvars quota info |
 
 ## Cron Jobs
 
