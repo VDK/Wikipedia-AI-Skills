@@ -1,0 +1,9 @@
+{{Information
+|description={{en|1=${description}}}
+|date=${date}
+|source=${source}
+|author=${author}
+|permission=
+|other_versions=
+}}
+[[Category:${categories}]]

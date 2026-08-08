@@ -1,4 +1,4 @@
-# Wikipedia AI Skills
+﻿# Wikipedia AI Skills
 
 A curated collection of skill files for AI coding agents - [Pi](https://github.com/earendil-works/pi), [OpenCode](https://opencode.ai), [Claude Code](https://docs.anthropic.com/en/docs/claude-code), and any agent that supports the `.claude/<name>/SKILL.md` convention - to help with Wikipedia, Wikimedia, and Wikidata-related tasks.
 
@@ -30,9 +30,9 @@ These skills are designed to **help you research, understand, and prepare conten
 
 ## Skills
 
-This repository contains **47 skills** organized into two groups.
+This repository contains **52 skills** organized into two groups.
 
-> 💡 **[Explore the interactive skills network →](docs/skills-network.html)** — see how all 47
+> 💡 **[Explore the interactive skills network →](docs/skills-network.html)** — see how all 52
 > skills connect to each other in a force-directed graph. Drag nodes, zoom, and hover
 > to discover cross-references between skills.
 
@@ -57,6 +57,7 @@ Skills are arranged from **foundational** (understanding how Wikipedia works) to
 | [wikimedia-wikitext](.claude/skills/wikimedia-wikitext/SKILL.md) | Parse, extract, and manipulate Wikipedia and MediaWiki wikitext (templates, infoboxes, citations, links) using proper AST-based tooling instead of fragile regex patterns |
 | [wikidata](.claude/skills/wikidata/SKILL.md) | Understand and query Wikidata — the free, collaborative, multilingual knowledge graph that underpins Wikipedia's inter-language links, Commons structured data, and semantic facts across all Wikimedia projects. Covers SPARQL, the Wikibase REST/Action APIs, RDF data dumps, and semantic web concepts |
 | [wikidata-vector-search](.claude/skills/wikidata-vector-search/SKILL.md) | Query Wikidata by meaning, concept, or natural-language description using semantic embeddings — fuzzy semantic search, concept matching, similarity lookups, cross-lingual retrieval, and "find like this" when you don't know the exact QID or label |
+| [quickstatements](.claude/skills/quickstatements/SKILL.md) | Build and run QuickStatements batches for Wikidata and Commons — the V1 command grammar (statements, qualifiers, references, ranks, item creation), value formatting, multilingual labels/descriptions/aliases, QS 2.0 vs 3.0, and a bundled validator/generator script |
 | [wikipedia-citations](.claude/skills/wikipedia-citations/SKILL.md) | Master Wikipedia citations — CS1/CS2 templates, Wayback Machine archiving, dead link detection, bare URL expansion, citation maintenance, and reference validation |
 | [wikipedia-wikitables](.claude/skills/wikipedia-wikitables/SKILL.md) | Create, parse, style, and fix MediaWiki wikitable syntax — delimiters, header/data cells, CSS classes, inline styling, rowspan/colspan, accessibility attributes, sortable and collapsible tables, and programmatic table generation from data |
 | [wikimedia-page-styling](.claude/skills/wikimedia-page-styling/SKILL.md) | Use TemplateStyles to load custom CSS on wiki pages — build responsive grid/flexbox layouts, card-based tile systems, color themes, button systems, and full visual design systems that transform plain MediaWiki pages into rich, interactive-looking interfaces |
@@ -71,6 +72,10 @@ Skills are arranged from **foundational** (understanding how Wikipedia works) to
 | [wikimedia-commons-audio-video](.claude/skills/wikimedia-commons-audio-video/SKILL.md) | Work with audio and video files on Wikimedia Commons — format policies and patent restrictions, uploading and transcoding, metadata via the Action API, keyframe thumbnails for video, the TimedMediaHandler player widget, TimedText subtitles, and creating derivative clips |
 | [wikimedia-commons-sdc](.claude/skills/wikimedia-commons-sdc/SKILL.md) | Add, edit, and manage Structured Data on Commons (SDC) — MediaInfo captions, depicts statements, copyright and license metadata, qualifiers, references, and batch/GLAM workflows via the Wikibase Action API, web UI, and community tooling |
 | [wikimedia-commons-sparql](.claude/skills/wikimedia-commons-sparql/SKILL.md) | Query Wikimedia Commons structured data via SPARQL — MediaInfo entities (M IDs), the depicts/copyright/licensing graph, Schema.org media metadata, and federated queries with Wikidata. Covers both the official WCQS endpoint and the QLever third-party endpoint |
+| [wikimedia-commons-categories](.claude/skills/wikimedia-commons-categories/SKILL.md) | Create and disambiguate Wikimedia Commons categories from Wikidata data — the occupation-from-country pattern, `by name` people categories, definite-article country phrases, pluralization, existence probing, and homonym disambiguation, distilled from the production Catapult gadget |
+| [pattypan](.claude/skills/pattypan/SKILL.md) | Build pattypan upload spreadsheets (.xls) for batch Wikimedia Commons uploads — the two-sheet Data/Template format, `path`/`name` headers, template-variable matching, filename validation, and a bundled generator/validator script |
+| [flickr](.claude/skills/flickr/SKILL.md) | Fetch photos from Flickr's read-only REST API (photosets, search, metadata, tags, geo) and prepare pattypan upload manifests for batch Wikimedia Commons uploads - license filtering, flickr2commons-style descriptions, and attribution |
+| [flickr-wayback-recovery](.claude/skills/flickr-wayback-recovery/SKILL.md) | Recover a deleted or offline Flickr account from the Wayback Machine (CDX enumeration, metadata scraping, image download) and batch-upload the photos missing from Wikimedia Commons via pattypan — matched by Flickr ID |
 | | **▸ Analyzing Articles** |
 | [wikimedia-pageviews](.claude/skills/wikimedia-pageviews/SKILL.md) | Retrieve traffic and popularity statistics for Wikipedia articles using cached SQL properties (sorting/filtering) or the REST API (precise historical data) |
 | [wikimedia-page-assessment](.claude/skills/wikimedia-page-assessment/SKILL.md) | Query Wikipedia article quality (FA/GA/B/C/Start/Stub) and importance ratings from WikiProject assessment banners on any Wikimedia wiki with the PageAssessments extension |
@@ -150,6 +155,9 @@ Skills for building bots, web apps, and data pipelines on Wikimedia infrastructu
 | Serve Commons images in a browser app (handle CORS issues) | [commons-file-resolution](.claude/skills/commons-file-resolution/SKILL.md) |
 | Query Commons structured data via SPARQL (find files by license, depicts, camera) | [wikimedia-commons-sparql](.claude/skills/wikimedia-commons-sparql/SKILL.md) |
 | Add depicts/captions/copyright statements to Commons files | [wikimedia-commons-sdc](.claude/skills/wikimedia-commons-sdc/SKILL.md) |
+| Build a pattypan .xls spreadsheet for a batch Commons upload | `python3 .claude/skills/pattypan/scripts/build_pattypan_spreadsheet.py --manifest files.csv --template template.wikitext --output upload.xls` |
+| Fetch Flickr photos into a pattypan manifest for a batch Commons upload | `python3 .claude/skills/flickr/scripts/fetch_flickr.py --photoset <id> --user <nsid> --out files.csv` then `python3 .claude/skills/pattypan/scripts/build_pattypan_spreadsheet.py --manifest files.csv --template template.wikitext --output upload.xls` |
+| Recover photos from a deleted Flickr account via the Wayback Machine and upload them to Commons | [flickr-wayback-recovery](.claude/skills/flickr-wayback-recovery/SKILL.md) — `python3 .claude/skills/flickr-wayback-recovery/scripts/cdx-photo-ids.py <nsid> <alias>` then the rest of the pipeline |
 | | **▸ Analyzing Articles** |
 | Get pageview statistics — how many people read an article? | [wikimedia-pageviews](.claude/skills/wikimedia-pageviews/SKILL.md) |
 | Check article quality and WikiProject ratings (FA, GA, B, C, Start, Stub) | [wikimedia-page-assessment](.claude/skills/wikimedia-page-assessment/SKILL.md) |
