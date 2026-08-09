@@ -19,7 +19,7 @@ URL-encode the `url` value (`*` becomes `%2A`). A descriptive `User-Agent` and
 ## Reading the response
 
 ```
-[["timestamp","original","statuscode","digest"],["20220423085409","https://www.flickr.com/photos/44783532@N07/6471391833/","200","..."]]
+[["timestamp","original","statuscode","digest"],["20220423085409","https://www.flickr.com/photos/44783532@N07/<photo-id>/","200","..."]]
 ```
 
 ## Replaying a capture

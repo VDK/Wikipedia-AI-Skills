@@ -116,9 +116,8 @@ def cdx_rows(account_url):
     raise RuntimeError("CDX query failed")
 
 rows = []
-for form in ("https://www.flickr.com/photos/44783532@N07/*",
-             "https://www.flickr.com/photos/stiftelsen/*"):
-    rows += cdx_rows(form)
+for nsid in ("44783532@N07", "stiftelsen"):
+    rows += cdx_rows(f"https://www.flickr.com/photos/{nsid}/*")
     time.sleep(1)
 
 photo_ids = sorted({int(m.group(1)) for r in rows

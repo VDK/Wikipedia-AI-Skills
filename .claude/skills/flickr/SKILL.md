@@ -99,14 +99,14 @@ The production `{{Information}}` style (from flickr2commons/flinfo) is richer th
 ```
 == {{int:filedesc}} ==
 {{Information
-| Description =| Source      = [https://www.flickr.com/photos/65847118@N06/53893127994/ Title]
-|Date={{Tokyophoto|2024-05-12 15:07}}
-| Author      = [https://www.flickr.com/people/65847118@N06 Maarten Heerlien] from Voorschoten, The Netherlands
+| Description =| Source      = [https://www.flickr.com/photos/25862681@N06/29815902112/ Title]
+|Date={{Tokyophoto|2016-09-24 15:56}}
+| Author      = [https://www.flickr.com/people/25862681@N06 KIYOSHI NOGUCHI] from Tokyo, Japan
 | Permission  =
 | other_versions=
 |other_fields=  {{Information field|name=Flickr tags|value={{Flickr Tags |Japan|日本|Tokyo|東京}}}}
 }}
-{{Location dec|35.697886|139.784972|source:Flickr_region:JP_scale:5000}}
+{{Location dec|35.702840|139.752638|source:Flickr_region:JP_scale:5000}}
 ```
 
 Rules (full details in `references/flickr-to-commons.md`):
