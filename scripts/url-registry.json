@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-08-09T10:38:18Z",
+ "generated_at": "2026-08-09T16:07:53Z",
  "generator": "scripts/refresh-url-registry.py",
  "skip": {
   "example": "illustrative placeholder URLs",
@@ -481,6 +481,7 @@
   "https://stream.wikimedia.org/v2/stream/recentchange,page-create,page-delete": 0,
   "https://stream.wikimedia.org/v2/stream/recentchange?since=2026-06-01T00:00:00Z": 0,
   "https://stream.wikimedia.org/v2/stream/wrong-stream-name": -1,
+  "https://sv.wikipedia.org/w/index.php?title=Internetdagarna&oldid=46115337": 200,
   "https://toolforge.org": 200,
   "https://toolforge.org/": 200,
   "https://tools-static.wmflabs.org": 200,
@@ -662,7 +663,7 @@
   "https://xn--h1ayg.wikipedia.org": 0,
   "https://your-site.com": -1,
   "https://your-tool.toolforge.org": -1,
-  "https://\u0440\u0443.wikipedia.org": 0
+  "https://ру.wikipedia.org": 0
  },
  "user_agent": "wikipedia-ai-skills-url-registry/1.0 (https://github.com/fuzheado/Wikipedia-AI-Skills)"
 }

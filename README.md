@@ -30,9 +30,9 @@ These skills are designed to **help you research, understand, and prepare conten
 
 ## Skills
 
-This repository contains **53 skills** organized into two groups.
+This repository contains **54 skills** organized into two groups.
 
-> 💡 **[Explore the interactive skills network →](docs/skills-network.html)** — see how all 53
+> 💡 **[Explore the interactive skills network →](docs/skills-network.html)** — see how all 54
 > skills connect to each other in a force-directed graph. Drag nodes, zoom, and hover
 > to discover cross-references between skills.
 
@@ -56,6 +56,7 @@ Skills are arranged from **foundational** (understanding how Wikipedia works) to
 | | **▸ Working with Content** |
 | [wikimedia-wikitext](.claude/skills/wikimedia-wikitext/SKILL.md) | Parse, extract, and manipulate Wikipedia and MediaWiki wikitext (templates, infoboxes, citations, links) using proper AST-based tooling instead of fragile regex patterns |
 | [wikidata](.claude/skills/wikidata/SKILL.md) | Understand and query Wikidata — the free, collaborative, multilingual knowledge graph that underpins Wikipedia's inter-language links, Commons structured data, and semantic facts across all Wikimedia projects. Covers SPARQL, the Wikibase REST/Action APIs, RDF data dumps, and semantic web concepts |
+| [wikidata-event-editions](.claude/skills/wikidata-event-editions/SKILL.md) | Create and enrich Wikidata edition items for recurring events (conferences, film festivals) — P31/P179/P393/P585, P155/P156 sequence chains, official website URLs with language qualifiers, references, and SPARQL chain verification |
 | [wikidata-vector-search](.claude/skills/wikidata-vector-search/SKILL.md) | Query Wikidata by meaning, concept, or natural-language description using semantic embeddings — fuzzy semantic search, concept matching, similarity lookups, cross-lingual retrieval, and "find like this" when you don't know the exact QID or label |
 | [quickstatements](.claude/skills/quickstatements/SKILL.md) | Build and run QuickStatements batches for Wikidata and Commons — the V1 command grammar (statements, qualifiers, references, ranks, item creation), value formatting, multilingual labels/descriptions/aliases, QS 2.0 vs 3.0, and a bundled validator/generator script |
 | [wikipedia-citations](.claude/skills/wikipedia-citations/SKILL.md) | Master Wikipedia citations — CS1/CS2 templates, Wayback Machine archiving, dead link detection, bare URL expansion, citation maintenance, and reference validation |
@@ -143,6 +144,7 @@ Skills for building bots, web apps, and data pipelines on Wikimedia infrastructu
 | Query Wikidata with SPARQL — find items, traverse properties, filter by value | [wikidata](.claude/skills/wikidata/SKILL.md) |
 | Find Wikipedia articles that lack a Wikidata item | [wikidata](.claude/skills/wikidata/SKILL.md) |
 | Search Wikidata by meaning (not exact name) — fuzzy cross-lingual concept search | [wikidata-vector-search](.claude/skills/wikidata-vector-search/SKILL.md) |
+| Create or enrich event edition items (conferences, film festivals) with full P155/P156 chains | [wikidata-event-editions](.claude/skills/wikidata-event-editions/SKILL.md) |
 | Check if a URL is archived on the Wayback Machine | `bash .claude/skills/wikipedia-citations/scripts/archive-check.sh https://example.com` |
 | Inspect a summary of all citations on a Wikipedia page | `bash .claude/skills/wikipedia-citations/scripts/citation-inspector.sh Albert_Einstein` |
 | Expand a bare URL into a proper citation template | `bash .claude/skills/wikipedia-citations/scripts/expand-bare-url.sh https://example.com` |
