@@ -1,0 +1,19 @@
+=={{int:filedesc}}==
+{{Information
+ |description = ${description}
+ |date = ${date}
+ |source = ${source}
+ |author = ${author}
+ |permission = ${permission}
+ |other versions = 
+}}
+
+=={{int:license-header}}==
+${license}{{Flickrreview}}
+
+<#if categories ? has_content>
+<#list categories ? split(";") as category>
+[[Category:${category?trim}]]
+</#list>
+<#else>{{subst:unc}}
+</#if>

@@ -14,7 +14,7 @@ skill_discovery_hints:
   - keywords: ["VRT", "permission", "Commons policy"]
   - keywords: ["Commons namespaces", "gallery", "Creator namespace"]
   - keywords: ["CORS", "cross-origin", "upload.wikimedia.org", "browser app", "Canvas", "WebGL"]
-last_verified: 2026-06-16
+last_verified: 2026-08-05
 ---
 
 > ⚠️ **User-Agent required:** All curl and code examples in this skill access Wikimedia APIs. Requests without a descriptive `User-Agent` header will be blocked with HTTP 403 or 429. See the **[wikimedia-api-access](../wikimedia-api-access/SKILL.md)** skill for the correct format and rate-limiting patterns.
@@ -312,6 +312,7 @@ Before uploading, verify:
 3. ✅ The file is in an **allowed format** (convert MP4/H.264 to WebM if needed).
 4. ✅ The file has a **meaningful name** (not `IMG_1234.jpg`).
 5. ✅ You have identified the correct **categories** for discoverability.
+6. ✅ The **date is honest** — never fabricate a capture date. If only the year is reliably known (e.g. from the photographer's own Flickr tag/album classification), write `date=YYYY` or `date=YYYY-MM` and no invented day. A migration upload is a common case: the source platform's "date taken" is often just the **upload date** for old scans, and the downloaded file's EXIF may be missing entirely (no `DateTimeOriginal`) — verify before asserting a date.
 
 ### **Volunteer Response Team (VRT) — Verifying Permissions**
 

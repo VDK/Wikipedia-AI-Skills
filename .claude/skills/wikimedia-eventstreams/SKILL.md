@@ -875,8 +875,8 @@ es.onmessage = (event) => {
 ```bash
 # Watch human edits on English Wikipedia in real time
 curl -sN -H 'Accept: application/json' \
-  https://stream.wikimedia.org/v2/stream/recentchange \
-  | jq 'select(.wiki == "enwiki" and .type == "edit" and .bot == false) | {user, title, comment}'
+  https://stream.wikimedia.org/v2/stream/recentchange |
+  jq 'select(.wiki == "enwiki" and .type == "edit" and .bot == false) | {user, title, comment}'
 ```
 
 ### Browser Swagger UI — interactive exploration
