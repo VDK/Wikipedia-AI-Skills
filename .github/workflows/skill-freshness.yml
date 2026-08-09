@@ -82,4 +82,4 @@ jobs:
               exit(1)
           else:
               print(f"✅ All {len(list(Path('.claude/skills').iterdir()))} skills are fresh")
-        shell: python3
+        shell: python3 {0}

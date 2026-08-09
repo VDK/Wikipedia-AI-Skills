@@ -186,7 +186,7 @@ List all photos, paginating fully, with the extras above. **Drop non-free licens
 `scripts/fetch_flickr.py` (stdlib-only, no OAuth) writes a manifest the pattypan skill's generator consumes:
 
 ```bash
-export FLICKR_API_KEY=<KEY>
+export FLICKR_API_KEY=YOUR_FLICKR_API_KEY
 
 # all photos in a photoset
 python scripts/fetch_flickr.py --photoset 72177720333707170 --user 36976328@N04 --out files.csv
