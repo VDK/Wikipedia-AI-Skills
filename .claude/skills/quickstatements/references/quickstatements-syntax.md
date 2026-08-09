@@ -194,7 +194,10 @@ Q4115189,Q36180,Douglas Adams,author,"Douglas Adams.jpg",
 3. **By URL.** Encode commands (newline -> `||`, then URL-encode) into:
    - QS 2.0: `https://quickstatements.toolforge.org/#/v1=...`
    - QS 3.0: `https://qs-dev.toolforge.org/batch/new?v1=...`
-   Commons templates like {{Creator}} and {{Artwork}} use this trick.
+   The `v1` parameter names the **V1 command format** (not the tool
+   version), so it stays `v1` on both QS 2 and QS 3; QS 3 only reads
+   `v1` (a `v3=` parameter does not exist). Commons templates like
+   {{Creator}} and {{Artwork}} use this trick.
 4. **API (QS 2.0).** `POST https://quickstatements.toolforge.org/api.php?action=import`
    with `username`, `token`, `data` (the commands), `format=v1` (or `csv`),
    `submit=1`, `openpage=1`, `batchname`, and `site` (`commons` for SDC).
