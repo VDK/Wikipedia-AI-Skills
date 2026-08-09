@@ -151,7 +151,7 @@ MERGE|Q1|Q2     # Q2 is redirected into Q1
 ### QS 3.0-only commands
 
 ```
-Q2513|P856|"http://hubblesite.org/"|R+          # rank: R+/Rpreferred, R0/Rnormal, R-/Rdeprecated
+Q2513|P856|"https://hubblesite.org/"|R+         # rank: R+/Rpreferred, R0/Rnormal, R-/Rdeprecated
 Q2513|P10565|"68143"|R-|P2241|Q21441764         # rank + qualifier
 +Q6454|P6|Q3160150|P580|+1959-03-15T00:00:00Z/11|P582|+1969-03-15T00:00:00Z/11  # force duplicate
 SWITCH_VALUE|Q1774|P2046|2461U712226|950.2U232291

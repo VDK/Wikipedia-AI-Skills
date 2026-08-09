@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-08-09T16:07:53Z",
+ "generated_at": "2026-08-09T17:47:20Z",
  "generator": "scripts/refresh-url-registry.py",
  "skip": {
   "example": "illustrative placeholder URLs",
@@ -12,7 +12,6 @@
   "http://commons.wikimedia.org/wiki/Special:FilePath/": 200,
   "http://commons.wikimedia.org/wiki/Special:FilePath/Eiffel_Tower_from_below.jpg": 200,
   "http://example.com": -1,
-  "http://hubblesite.org/": 0,
   "http://localhost": 0,
   "http://localhost:3000": 0,
   "http://localhost:3000/events": 0,
@@ -359,6 +358,7 @@
   "https://gitlab.wikimedia.org/toolforge-repos/my-tool": -1,
   "https://hay.toolforge.org/depictor/": 200,
   "https://hay.toolforge.org/minefield/": 200,
+  "https://hubblesite.org/": 200,
   "https://image-annotator.toolforge.org/": 200,
   "https://incubator.wikimedia.org": 200,
   "https://inkscape.org": 200,

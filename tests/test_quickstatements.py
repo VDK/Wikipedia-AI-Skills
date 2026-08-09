@@ -271,7 +271,7 @@ class TestValidateErrors:
 
 class TestValidateQs3:
     def test_ranks(self):
-        assert _errors('Q2513|P856|"http://hubblesite.org/"|R+') == []
+        assert _errors('Q2513|P856|"https://hubblesite.org/"|R+') == []
         assert _errors('Q2513|P856|"http://spacetelescope.org/"|R0') == []
         assert _errors('Q2513|P10565|"68143"|R-|P2241|Q21441764') == []
         assert _errors('Q2513|P856|"http://example.org/"|Rpreferred') == []
@@ -304,7 +304,7 @@ class TestValidateQs3:
 
     def test_full_qs3_batch(self):
         batch = """\
-Q2513|P856|"http://hubblesite.org/"|R+
+Q2513|P856|"https://hubblesite.org/"|R+
 Q2513|P10565|"68143"|R-|P2241|Q21441764
 +Q6454|P6|Q3160150|P580|+1959-03-15T00:00:00Z/11|P582|+1969-03-15T00:00:00Z/11
 REMOVE_QUAL|Q14560|P225|"Cactaceae"|P405|Q223963
