@@ -199,7 +199,7 @@ def extract_model(html):
 |---|---|---|
 | title | `photo-models[0].title` | percent-encoded, latin-1 bytes — decode |
 | description | `photo-models[0].description` | same decoding |
-| license | `photo-models[0].license` | Flickr license **id** (2=NC, 4=CC-BY-2.0, 5=CC-BY-SA-2.0) |
+| license | `photo-models[0].license` | Flickr license **id** — only free set 4,5,7,8,9,10,11,12 is uploadable (see License below) |
 | dateTaken | `photo-stats-models[0].dateTaken` | string; fall back to `datePosted` |
 | tags | `photo-head-meta-models[0].keywords` | comma-separated, same decoding |
 | owner | `person-models[0]` | nsid, pathAlias, username, realname |
@@ -308,9 +308,13 @@ separately.
 
 ### License
 
-Keep the Flickr license **id** in the manifest; the template translates it:
-`4 → {{cc-by-2.0}}`, `5 → {{cc-by-sa-2.0}}`. **Skip license `2` (CC BY-NC-2.0)**
-— not acceptable on Commons. Do not invent a license.
+The license **id** comes from the archived page's `modelExport` blob
+(`photo-models[0].license`); keep that id in the manifest and let the pattypan
+template translate it. Only the **free set** `4, 5, 7, 8, 9, 10, 11, 12` is
+uploadable to Commons — the [flickr skill](../flickr/SKILL.md) has the full
+id → Commons-template map. Anything else (`0–3, 6`) is non-free: **skip the
+photo, never invent a license**. A missing or unreadable license in the archive
+is a skip reason too — do not guess.
 
 ### Author / credit
 
