@@ -41,11 +41,10 @@ roll it back as one edit group.
 
 | Need | Use |
 |---|---|
-| New Wikidata statement work | **QS 3.0** (`quickstatements3.toolforge.org`) - ranks, forced duplicates, grouped edits |
+| New Wikidata statement work | **QS 3.0** (`qs-dev.toolforge.org`) - ranks, forced duplicates, grouped edits |
 | Commons Structured Data (M IDs) | **QS 2.0** (`quickstatements.toolforge.org`) - QS 3.0 cannot (REST API limit) |
 | `MERGE` items, lexemes | **QS 2.0** |
 | Programmatic submission | **QS 2.0** `api.php` token interface |
-| Trying upcoming features | `qs-dev.toolforge.org` (QS 3.0 dev instance) |
 
 V1 commands are compatible across versions, so a batch like the New-Q5
 person example runs unchanged in both.
@@ -130,7 +129,7 @@ python .claude/skills/quickstatements/scripts/qs_batch.py \
   URL with DONE/ERROR/INIT/RUN counters, revertible as an edit group. Use
   normal mode for ~10 or fewer statements.
 - **By URL**: `https://quickstatements.toolforge.org/#/v1=<encoded>`
-  (QS 2) or `https://quickstatements3.toolforge.org/batch/new?v1=<encoded>`
+  (QS 2) or `https://qs-dev.toolforge.org/batch/new?v1=<encoded>`
   (QS 3).
 - **API** (QS 2.0): `POST https://quickstatements.toolforge.org/api.php?action=import`
   with `username`, `token` (from your QS user page), `data`, `submit=1`,

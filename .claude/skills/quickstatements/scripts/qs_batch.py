@@ -389,13 +389,12 @@ def to_v1_url(commands, version=2):
     """Encode V1 commands into a clickable QuickStatements URL.
 
     QS 2.0 uses a fragment:  https://quickstatements.toolforge.org/#/v1=...
-    QS 3.0 uses a query param: https://quickstatements3.toolforge.org/batch/new?v1=...
-    (the dev instance lives at https://qs-dev.toolforge.org/batch/new?v1=...)
+    QS 3.0 uses a query param: https://qs-dev.toolforge.org/batch/new?v1=...
     """
     fragment = "||".join(commands)
     encoded = urllib.parse.quote(fragment, safe="")
     if version == 3:
-        return "https://quickstatements3.toolforge.org/batch/new?v1=" + encoded
+        return "https://qs-dev.toolforge.org/batch/new?v1=" + encoded
     if version == 2:
         return "https://quickstatements.toolforge.org/#/v1=" + encoded
     raise ValueError("version must be 2 or 3")
@@ -423,7 +422,7 @@ def _main(argv):
                         help="also print the clickable URL for the batch")
     parser.add_argument("--version", type=int, choices=[2, 3], default=2,
                         help="QS version for the URL (2 = quickstatements, "
-                             "3 = quickstatements3)")
+                             "3 = qs-dev)")
     args = parser.parse_args(argv)
 
     if args.person:

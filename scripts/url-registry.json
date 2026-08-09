@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-08-09T17:47:20Z",
+ "generated_at": "2026-08-09T18:02:11Z",
  "generator": "scripts/refresh-url-registry.py",
  "skip": {
   "example": "illustrative placeholder URLs",
@@ -450,6 +450,7 @@
   "https://qs-dev.toolforge.org/": 200,
   "https://qs-dev.toolforge.org/#/v1=": 200,
   "https://qs-dev.toolforge.org/batch/new?v1=": 200,
+  "https://qs-dev.toolforge.org/batch/new?v1=<encoded": -1,
   "https://query.wikidata.org": 200,
   "https://query.wikidata.org/": 200,
   "https://query.wikidata.org/embed.html": 200,
@@ -460,9 +461,6 @@
   "https://quickstatements.toolforge.org/#/v1=<encoded": -1,
   "https://quickstatements.toolforge.org/api.php": 200,
   "https://quickstatements.toolforge.org/api.php?action=import": -2,
-  "https://quickstatements3.toolforge.org/": 404,
-  "https://quickstatements3.toolforge.org/batch/new?v1=": 404,
-  "https://quickstatements3.toolforge.org/batch/new?v1=<encoded": -1,
   "https://refill.toolforge.org/": 200,
   "https://refill.toolforge.org/ng/api/en.wikipedia.org/Article": 200,
   "https://refill.toolforge.org/ng/api/en.wikipedia.org/Article_Title": 200,

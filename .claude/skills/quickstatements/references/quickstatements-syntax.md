@@ -12,7 +12,7 @@ documentation is
 | | QuickStatements 2.0 | QuickStatements 3.0 |
 |---|---|---|
 | Maintainer | Magnus Manske | Wikimedia Brasil |
-| URL | `https://quickstatements.toolforge.org/` | `https://quickstatements.toolforge.org/` (dev: `https://qs-dev.toolforge.org/`) |
+| URL | `https://quickstatements.toolforge.org/` | `https://qs-dev.toolforge.org/` |
 | Syntax | V1 + CSV | V1 + CSV (compatible superset) |
 | Ranks (preferred/normal/deprecated) | no | **yes** (`R+` / `R0` / `R-`) |
 | Force duplicate statements | no | **yes** (`+` prefix) |
@@ -183,7 +183,7 @@ Q4115189,Q36180,Douglas Adams,author,"Douglas Adams.jpg",
 ## Running a batch
 
 1. **Web UI.** `quickstatements.toolforge.org` (QS 2) or
-   `quickstatements.toolforge.org` (QS 3). Log in with OAuth
+   `qs-dev.toolforge.org` (QS 3). Log in with OAuth
    (autoconfirmed account). "New batch" -> paste V1 commands or CSV ->
    preview -> run. QS 3 groups consecutive commands on the same entity into
    one edit; toggle it off with "Do not combine commands".
@@ -193,8 +193,7 @@ Q4115189,Q36180,Douglas Adams,author,"Douglas Adams.jpg",
    statements; ~25k simple statements is a rough batch-size ceiling.
 3. **By URL.** Encode commands (newline -> `||`, then URL-encode) into:
    - QS 2.0: `https://quickstatements.toolforge.org/#/v1=...`
-   - QS 3.0: `https://quickstatements.toolforge.org/#/v1=...`
-     (dev: `https://qs-dev.toolforge.org/#/v1=...`)
+   - QS 3.0: `https://qs-dev.toolforge.org/batch/new?v1=...`
    Commons templates like {{Creator}} and {{Artwork}} use this trick.
 4. **API (QS 2.0).** `POST https://quickstatements.toolforge.org/api.php?action=import`
    with `username`, `token`, `data` (the commands), `format=v1` (or `csv`),

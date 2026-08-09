@@ -36,7 +36,7 @@ class TestSkillDocs:
 
     def test_both_versions_covered(self):
         text = read_skill("quickstatements")
-        assert "quickstatements3.toolforge.org" in text  # QS 3.0
+        assert "qs-dev.toolforge.org" in text  # QS 3.0
         assert "quickstatements.toolforge.org" in text   # QS 2.0
 
     def test_multilingual_commands(self):
@@ -380,13 +380,13 @@ class TestToV1Url:
 
     def test_version_3(self):
         url = qs.to_v1_url(["Q42|P31|Q5"], version=3)
-        assert url.startswith("https://quickstatements3.toolforge.org/batch/new?v1=")
+        assert url.startswith("https://qs-dev.toolforge.org/batch/new?v1=")
         assert "%7C" in url
 
-    def test_version_3_dev_note(self):
-        # dev instance is documented in the skill; builder points at production
+    def test_version_3_qsdev(self):
+        # qs-dev is the live QS 3.0 instance (quickstatements3 was decommissioned)
         assert qs.to_v1_url(["Q42|P31|Q5"], version=3).startswith(
-            "https://quickstatements3.toolforge.org/")
+            "https://qs-dev.toolforge.org/")
 
     def test_bad_version(self):
         with pytest.raises(ValueError):
