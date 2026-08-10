@@ -217,6 +217,13 @@ def validate(headers: list[str], rows: list[list[str]], template_text: str,
     if missing:
         errors.append(f"headers must include 'path' and 'name' (missing: {', '.join(missing)})")
 
+    # BIFF8 .xls hard-caps at 65,536 rows — warn well before the writer fails.
+    if len(rows) >= 65500:
+        warnings.append(
+            f"{len(rows)} data rows — the .xls format (BIFF8) hard-caps at 65,536 "
+            f"rows; split the batch into multiple spreadsheets"
+        )
+
     # every ${var} in the template must have a column (pattypan fails otherwise).
     # Loop variables from <#list ... as X> and built-in chains (?trim etc.) are
     # template-local, so they are not required as columns.
@@ -305,11 +312,75 @@ def validate(headers: list[str], rows: list[list[str]], template_text: str,
             if var in data and not data.get(var, ""):
                 warnings.append(f"row {idx}: empty value for '{var}'")
 
+        # FreeMarker interpolation risk: a literal ${...} in a cell value is
+        # evaluated when pattypan renders the template — a reference to a
+        # missing column aborts the WHOLE load with "variables mismatch".
         for value in row:
-            if value and value[0] in FORMULA_RISK_PREFIXES:
+            if "${" in value:
+                errors.append(
+                    f"row {idx}: value contains '${{' — FreeMarker will interpolate "
+                    f"it when rendering (a reference to a missing column aborts the "
+                    f"whole load with 'variables mismatch'); remove or escape it"
+                )
+            elif value and value[0] in FORMULA_RISK_PREFIXES:
                 warnings.append(
-                    f"row {idx}: value starting with '{value[0]}' may be read as a formula "
-                    f"by Excel; quote it if intended"
+                    f"row {idx}: value starting with '{value[0]}' may be read as a "
+                    f"formula by Excel; quote it if intended"
+                )
+
+        # MediaWiki parser risk: raw '|' inside a template parameter breaks the
+        # parameter list unless HTML-entity-escaped (&#124;).
+        for var in ("description", "author", "title"):
+            if var in data and "|" in data.get(var, ""):
+                warnings.append(
+                    f"row {idx}: '{var}' contains '|' — inside a template parameter "
+                    f"this must be HTML-entity-escaped as &#124; (see the pattypan "
+                    f"reference doc §6.5)"
+                )
+
+        # Categories convention: pattypan's own templates split on ';'; a '|'
+        # silently becomes a category sortkey instead of a second category.
+        if "categories" in data and "|" in data.get("categories", ""):
+            warnings.append(
+                f"row {idx}: categories uses '|' — pattypan templates split "
+                f"categories on ';'; change '|' to ';' or it becomes a sortkey"
+            )
+
+    # --- batch-level checks -------------------------------------------------
+    seen_names: dict[str, int] = {}
+    seen_paths: dict[str, int] = {}
+    for idx, row in enumerate(rows, start=2):
+        if not any(row):
+            continue
+        data = dict(zip(headers, row))
+        name = data.get("name", "")
+        path = data.get("path", "")
+        if name:
+            if name in seen_names:
+                warnings.append(
+                    f"row {idx}: duplicate name '{name}' (also row {seen_names[name]}) "
+                    f"— pattypan silently skips the second upload when the name is taken"
+                )
+            else:
+                seen_names[name] = idx
+        if path:
+            if path in seen_paths:
+                warnings.append(
+                    f"row {idx}: duplicate path '{path}' (also row {seen_paths[path]}) "
+                    f"— the same file would be uploaded twice"
+                )
+            else:
+                seen_paths[path] = idx
+
+    # template-referenced columns that are empty in every row (pattypan warns
+    # 'empty values' per row; this is the summary-level version)
+    for var in template_column_variables(template_text):
+        if var in headers:
+            col = headers.index(var)
+            if all(not (row[col] if col < len(row) else "") for row in rows):
+                warnings.append(
+                    f"column '{var}' is empty in every row — pattypan warns 'empty "
+                    f"values'; remove the column or fill the values"
                 )
 
     return errors, warnings
@@ -383,7 +454,9 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--categories", type=str, default="", metavar="CATS",
-        help="Default categories for the categories column (pipe-separated).",
+        help="Default categories for the categories column (semicolon-separated, "
+             "matching the <#list categories ? split(';')> template pattern; "
+             "'|' would become a category sortkey, not a second category).",
     )
     parser.add_argument(
         "--name-pattern", type=str, default="{name}", metavar="PATTERN",

@@ -39,6 +39,14 @@ A pattypan spreadsheet is **at least two sheets in one `.xls` file** — pattypa
 - **Every `${var}` referenced in the template MUST have a matching column in the Data sheet.** If any variable is missing, FreeMarker raises `InvalidReferenceException` and pattypan reports `"variables mismatch. Column headers variables must match wikitemplate variables."` Extra Data columns not referenced by the template are harmless (FreeMarker ignores them).
 - **Constants live in the template; the Data sheet holds only variables.** Anything identical for every file — a photographer's NSID/username inside a source or author URL, the license, `Permission` — is written **directly into the template text** (replace `${var}` with the literal value), not repeated in cells. Don't pad the sheet to silence the builder's empty-cell warnings: a row legitimately leaves optional columns blank.
 - **Empty cells are fine.** pattypan only hard-requires `path` and `name`; every other column may be empty per row (the builder emits a non-fatal warning, not an error). Guard optional values in the template with `<#if var ? has_content>${var}<#else>…default…</#if>` — the same fallback pattern used for `categories` — so a blank cell renders the default instead of an empty template field. The one field that genuinely must not be empty is `description`; a blank description is a bad upload.
+- **Escape template-significant characters in cell values.** Values are injected into the template
+  *before* FreeMarker and the MediaWiki parser see them: a raw `|` inside a template parameter
+  breaks the parameter list, and a literal `${...}` in a value is interpolated by FreeMarker — a
+  reference to a missing column aborts the **whole load** with `"variables mismatch"`. Escape `|`,
+  `{`, `}`, `=` as `&#124;`, `&#123;`, `&#125;`, `&#61;` (the MediaWiki parser decodes them inside
+  the template argument); never put `${` in a value. The bundled script errors on `${` in any cell
+  and warns on raw `|` in `description`/`author`/`title` (and on `|` in `categories`, where it
+  silently becomes a sortkey instead of a second category).
 - **Columns and template variables are yours to choose** — the sample template is illustrative, not a contract. Pick the smallest set of per-file variables (`id`, `title`, `description`, `date`, `categories`, …) and build everything else in the template. With the account NSID hardcoded, a source URL is derived from `${id}` alone — `[https://www.flickr.com/photos/<nsid>/${id}/ ${title}]` when the title is meaningful, a bare `https://www.flickr.com/photos/<nsid>/${id}/` when the title cell is empty — never a repeated per-row URL column.
 - **Optional per-file overrides**: guard with `<#if var ? has_content>${var}<#else>…default…</#if>` so most rows leave the column empty and only exceptions fill it. A proven pattern: leave the `title` cell empty for meaningless titles (e.g. `IMG_1234`, `613`), and the same source line above degrades from a labeled link to a bare URL via `?has_content`. `?has_content` on a missing column is safe.
 
@@ -57,7 +65,7 @@ The Template cell is compiled with the real FreeMarker engine, so the template i
 
 FreeMarker behavior you can rely on:
 - `?has_content` on a **missing** column is safe (evaluates to false) — only a bare `${missing}` or an unguarded `<#list missing ...>` aborts the whole load with "variables mismatch" (`InvalidReferenceException`, `DEBUG_HANDLER` rethrows it). Guard optional columns with `<#if x ? has_content>`.
-- The bundled script treats directive-only references as warnings (fallback), not errors; it also flags template columns that are empty in every row.
+- The bundled script treats directive-only references as warnings (fallback), not errors; it flags template columns that are empty in every row, warns on duplicate `name`/`path` values across rows and on raw `|` in values, and **errors on `${` inside any cell value** (FreeMarker would interpolate it).
 - Full upload templates are normal: `{{int:filedesc}}`, the `{{Information}}` block, `{{int:license-header}}`, the license template (`{{CC-BY-SA-4.0}}`, `{{Cc-by-2.0}}`, ...) plus `{{FlickreviewR}}`/`{{Flickrreview}}`, and the categories block above all go in the single Template cell.
 
 ### File format
@@ -98,7 +106,7 @@ python scripts/build_pattypan_spreadsheet.py \
 python scripts/build_pattypan_spreadsheet.py --manifest files.csv --template t.txt --check-only
 ```
 
-Run `--help` for all options (per-file JSON/CSV values, `--date-from-exif`, `--name-pattern`, `--allow-urls`).
+Run `--help` for all options: `--constants` (inline JSON or a file), `--date-from-exif`, `--name-pattern`, `--no-check-paths`, `--categories`, `--check-only`; manifests may be CSV, TSV, or a JSON list of objects.
 
 ### 4. Generate the file without the script (drop-in Python)
 
@@ -133,6 +141,19 @@ wb.save("pattypan-upload.xls")
 - Ideally preview the rendered wikitext via `Special:ExpandTemplates` on the wiki.
 - After any bulk metadata edit (e.g. correcting dates across many rows), **rebuild and re-verify** with `--check-only`, then confirm the Template sheet's cell A1 still holds the constant author/license text and spot-check the resulting column values in the `Data` sheet (e.g. the year-month distribution of the `date` column).
 - **Year-month text dates** (`2011-08`) pass through verbatim and are the right precision when only the edition year plus a recurring month (e.g. a yearly festival held every August) is reliably known — never invent a day.
+
+### 6. Run the upload (what pattypan does — verified against UploadPane.java)
+
+1. **Log in** to Wikimedia Commons in pattypan with an account that has upload rights (the app authenticates via the MediaWiki API before uploading).
+2. Load the `.xls` (Start → Load file) and confirm the summary shows the expected file count with `0 errors`.
+3. Click **Upload**. pattypan pauses **~0.5 s between files** (a 1,000-file batch is ≥8 minutes of pure pacing before transfer time), shows `[n/N]` progress, and logs per-file status.
+4. **Skips you'll see**: `name-taken` — a file with that name already exists on Commons (pattypan pre-checks and silently skips it, so duplicate `name`s in one spreadsheet simply vanish); `file-duplicate` — identical content (SHA-1) already uploaded under a different name (`"This file is already uploaded as <name>"`). Both are normal — dedupe the manifest rather than re-running the batch.
+5. **Failures** (network, login, API errors) are collected: the Upload button becomes **Retry** (re-uploads only the failed files) or **Continue**; **Stop** halts after the in-flight file.
+6. After the run, verify on Commons (`Special:Contributions` and the batch's categories). For any metadata fix, **rebuild the spreadsheet** (don't hand-edit cells in Excel — re-saving can drop the apostrophe or rewrite cells) and load the corrected file.
+
+### 7. Alternative: let pattypan build the spreadsheet (wizard)
+
+pattypan can generate its own `.xls` (Start → New spreadsheet → pick a directory → choose the built-in **Information** or **Artwork** template or paste your own wikicode → mark each column Yes/Const → it writes `pattypan <timestamp>.xls`). It writes `name` cells **without extensions** (relying on auto-append), pre-fills constants and optional EXIF dates, and produces the same two-sheet format. Use the wizard as a ground-truth cross-check when debugging a hand-built file — but for scripted or GLAM work the bundled builder adds validation the wizard doesn't have.
 
 ## Filename validation rules (pattypan `Util.java`)
 

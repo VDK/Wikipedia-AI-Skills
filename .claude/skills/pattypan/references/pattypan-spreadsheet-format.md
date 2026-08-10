@@ -205,6 +205,7 @@ Patterns that kept the batch clean:
 | pattypan message | Meaning |
 |------------------|---------|
 | `File error: file needs to be saved in binnary format. Please save your file in "Excel 97-2003 format"` | File is not a valid `.xls` (e.g. `.xlsx`, CSV, or a corrupted file) |
+| `File error: there are problems opening file. It may be corrupted.` | Not a readable `.xls` — truncated/corrupt file, or a BIFF12 variant (`.xlsb`/`.xlsm`) the `jxl` reader can't open |
 | `Error: your spreadsheet should have minimum two tabs.` | Second (Template) sheet missing |
 | `File error: variables mismatch. Column headers variables must match wikitemplate variables.` | A `${var}` in the Template sheet has no matching Data column |
 | `Error: template in spreadsheet looks empty. Check if wikitemplate is present in second tab of your spreadsheet (first row and first column).` | Cell A1 of the Template sheet is empty |
@@ -213,3 +214,28 @@ Patterns that kept the batch clean:
 | `filename does not include a valid file extension` | URL upload where `name` lacks an allowed extension |
 | `invalid URL` | `path` is not a valid `http(s)://` URL |
 | `empty path` / `empty name` | Row missing a required value |
+
+## 8. Upload-time behavior (UploadPane.java)
+
+Beyond spreadsheet loading, `UploadPane` defines what users see during a batch
+run — useful for interpreting upload logs:
+
+- **Login** — the app authenticates with the Commons account entered in the
+  LoginPane before uploads start; uploads require an account with upload rights.
+- **Pacing** — a ~500 ms `Thread.sleep` before each file, so a 1,000-file
+  batch takes ≥8 minutes of pure pacing plus transfer time.
+- **Name-taken skip** — before uploading, `isFileNameTaken(name)` queries the
+  API for `File:<normalized-name>`; if it exists the file is **skipped
+  silently** (`"This file name is already used"`). Duplicate `name` values in
+  one spreadsheet therefore vanish from the batch — check uniqueness up front.
+- **File-duplicate** — when the MediaWiki API reports the content already
+  exists (matched by SHA-1), the row fails with
+  `"This file is already uploaded as <name>"`.
+- **Retry / Continue** — failed elements are collected in `failedElements`;
+  the Upload button becomes **Retry** (re-upload only the failures) or
+  **Continue** (resume from the current position). **Stop** halts after the
+  in-flight file.
+- **Name normalization at upload** — `Util.getNormalizedName`:
+  `name.trim().replaceAll(" +", " ")` (trimmed, internal space runs collapsed).
+- **Edit summary** — uploads are tagged with pattypan's own
+  `Settings.NAME + " " + Settings.VERSION` (current releases use a date-based scheme, e.g. `pattypan 26.02`).

@@ -228,6 +228,72 @@ class TestValidate:
         assert not any("FreeMarker directive" in w for w in warnings)
 
 
+
+class TestValidateNewChecks:
+    """New batch-level and value-safety checks (2026-08 audit additions)."""
+
+    def test_dollar_brace_in_value_is_error(self):
+        # A literal ${...} in a cell value is interpolated by FreeMarker at
+        # render time; a reference to a missing column aborts the whole load.
+        rows = [["/tmp/a.jpg", "A photo", "Price was ${100} dollars",
+                 "2024-01-01", "Jane", "{{own}}", "Paris"]]
+        errors, _ = pp.validate(GOOD_HEADERS, rows, TEMPLATE, check_paths=False)
+        assert any("interpolate" in e and "row 2" in e for e in errors)
+
+    def test_pipe_in_description_warns(self):
+        rows = [["/tmp/a.jpg", "A photo", "a | b description",
+                 "2024-01-01", "Jane", "{{own}}", "Paris"]]
+        _, warnings = pp.validate(GOOD_HEADERS, rows, TEMPLATE, check_paths=False)
+        assert any("HTML-entity-escaped" in w for w in warnings)
+
+    def test_pipe_in_author_warns(self):
+        rows = [["/tmp/a.jpg", "A photo", "desc",
+                 "2024-01-01", "Jane | Smith", "{{own}}", "Paris"]]
+        _, warnings = pp.validate(GOOD_HEADERS, rows, TEMPLATE, check_paths=False)
+        assert any("author" in w and "|" in w for w in warnings)
+
+    def test_pipe_categories_warns(self):
+        # pattypan's templates split categories on ';'; a '|' becomes a sortkey
+        rows = [["/tmp/a.jpg", "A photo", "desc", "2024-01-01", "Jane", "{{own}}",
+                 "Monuments of Paris|Eiffel Tower"]]
+        _, warnings = pp.validate(GOOD_HEADERS, rows, TEMPLATE, check_paths=False)
+        assert any("sortkey" in w for w in warnings)
+
+    def test_duplicate_name_warns(self):
+        rows = [
+            ["/tmp/a.jpg", "Same name.jpg", "d1", "2024-01-01", "a", "{{own}}", "X"],
+            ["/tmp/b.jpg", "Same name.jpg", "d2", "2024-01-01", "b", "{{own}}", "Y"],
+        ]
+        _, warnings = pp.validate(GOOD_HEADERS, rows, TEMPLATE, check_paths=False)
+        assert any("duplicate name" in w and "row 3" in w for w in warnings)
+
+    def test_duplicate_path_warns(self):
+        rows = [
+            ["/tmp/a.jpg", "One.jpg", "d1", "2024-01-01", "a", "{{own}}", "X"],
+            ["/tmp/a.jpg", "Two.jpg", "d2", "2024-01-01", "b", "{{own}}", "Y"],
+        ]
+        _, warnings = pp.validate(GOOD_HEADERS, rows, TEMPLATE, check_paths=False)
+        assert any("duplicate path" in w and "row 3" in w for w in warnings)
+
+    def test_row_limit_warns(self):
+        rows = [
+            [f"/tmp/f{i}.jpg", f"File {i}", "d", "2024-01-01", "a", "{{own}}", "X"]
+            for i in range(65500)
+        ]
+        _, warnings = pp.validate(GOOD_HEADERS, rows, TEMPLATE, check_paths=False)
+        assert any("65,536" in w for w in warnings)
+
+    def test_all_empty_template_column_warns(self):
+        # description column referenced by the template but empty in every row
+        rows = [["/tmp/a.jpg", "A photo", "", "2024-01-01", "Jane", "{{own}}", "Paris"]]
+        _, warnings = pp.validate(GOOD_HEADERS, rows, TEMPLATE, check_paths=False)
+        assert any("column 'description' is empty in every row" in w for w in warnings)
+
+    def test_good_rows_still_clean(self):
+        errors, warnings = pp.validate(GOOD_HEADERS, GOOD_ROWS, TEMPLATE, check_paths=False)
+        assert errors == []
+        assert warnings == []
+
 class TestRowsFromDirectory:
     def test_builds_rows_with_constants(self, tmp_path):
         (tmp_path / "a.jpg").write_bytes(b"x")

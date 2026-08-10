@@ -1,9 +1,19 @@
+=={{int:filedesc}}==
 {{Information
 |description={{en|1=${description}}}
 |date=${date}
 |source=${source}
 |author=${author}
 |permission=
-|other_versions=
+|other versions=
 }}
-[[Category:${categories}]]
+
+=={{int:license-header}}==
+{{CC-BY-SA-4.0}}
+
+<#if categories ? has_content>
+<#list categories ? split(";") as category>
+[[Category:${category?trim}]]
+</#list>
+<#else>{{subst:unc}}
+</#if>
