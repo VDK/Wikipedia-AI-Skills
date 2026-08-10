@@ -7,7 +7,7 @@ compatibility: opencode
 skill_discovery_hints:
   - keywords: ["reference URLs", "citation URLs", "bare ref", "URL detection", "verifiability check"]
   - keywords: ["named ref", "shortened footnote", "url= parameter", "reference analysis"]
-last_verified: 2026-06-10
+last_verified: 2026-08-10
 ---
 
 > ⚠️ **User-Agent required:** The API calls in this skill need a descriptive `User-Agent`
@@ -44,6 +44,39 @@ and a frequent target for citation maintenance.
 | Shortened footnote | `<ref>{{harvsp\|Smith\|2020}}</ref>` | ❌ | ❌ (may resolve in bibliography) |
 | Named ref (reuse) | `<ref name="x" />` | resolves to definition | depends on definition |
 
+### Verifiable ≠ must have a URL
+
+A source is **verifiable online** if it carries a resolvable identifier, even
+with no `url=` parameter. A `{{cite journal|doi=10.1000/xyz123}}` is as
+verifiable as one with a URL — the DOI resolves to a landing page. When
+assessing verifiability, count these identifier parameters the same as a URL:
+
+| Identifier | Templates | Example |
+|---|---|---|
+| `doi` | cite journal / conference | `10.1000/xyz123` |
+| `pmid` / `pmc` | cite journal | `12345678` / `PMC1234567` |
+| `isbn` | cite book | `978-0-262-52316-5` |
+| `issn` | any | `0040-165X` |
+| `oclc` | cite book | `123456789` |
+| `jstor` | cite journal | `123456` |
+| `bibcode` | cite journal | `1924PhRv...23..123B` |
+| `arxiv` / `eprint` | cite arXiv / bioRxiv | `1234.56789` |
+| `s2cid` | cite journal | `12345678` |
+
+```python
+from assets.ref_url_checker import has_any_url_refs, has_any_verifiable_refs
+
+# URL-only view (strict):
+has_url, total, url_count, samples = has_any_url_refs(wikitext)
+
+# Verifiable view (URL or identifier):
+has_v, total, v_count, samples = has_any_verifiable_refs(wikitext)
+```
+
+Use the URL-only view when the question is literally "does the reader get a
+clickable link"; use the verifiable view when the question is "can a reader
+verify this online at all" (the WP:V question).
+
 ---
 
 ## SOP: URL Detection Strategy
@@ -64,16 +97,24 @@ ref_tags = parsed.filter_tags(
 ### Pass 2 — Index named ref definitions
 
 Named refs can be defined anywhere on the page, even after their first use.
-Index all definitions before evaluating individual refs:
+Index all definitions before evaluating individual refs. **Ref names are
+scoped per group** (the Cite extension's `group` attribute): `name="x"` in
+group `"n"` is a *different* name from `name="x"` in the default (unnamed)
+group. Index by the `(group, name)` pair, never by bare name:
 
 ```python
-named_defs: dict[str, str] = {}
+named_defs: dict[tuple[str, str], str] = {}
 for tag in ref_tags:
     name = _named_ref_name(tag)
+    group = _ref_group(tag)          # "" for the default group
     content = _tag_content(tag)
-    if name and content and name not in named_defs:
-        named_defs[name] = content
+    if name and content and (group, name) not in named_defs:
+        named_defs[(group, name)] = content
 ```
+
+Without group-scoping, a reuse like `<ref group="n" name="apsis" />` would
+wrongly resolve against a default-group definition — producing false
+"has URL" results (a real bug found and fixed in this skill's library).
 
 ### Pass 3 — Evaluate each reference
 
@@ -140,10 +181,13 @@ URL_PARAM_NAMES = frozenset({
     "contributionurl",
     "transcripturl",
     "archiveurl",
-    # Deprecated but still in use
-    "accessdate",  # not a URL, but check its value
 })
 ```
+
+> Note: `access-date` is a *date*, not a URL — do not treat it as one. The
+> `url=`, `*-url=` and `archive-url=` parameters (plus `doi`, `pmid`, `isbn`,
+> etc. — see "Verifiable ≠ must have a URL" above) are what make a ref
+> verifiable.
 
 Implementation:
 
@@ -331,14 +375,24 @@ to the npp-finder tool.
 The full reference analysis library — importable, with all edge cases handled:
 
 ```python
-from assets.ref_url_checker import has_any_url_refs, has_infobox
+from assets.ref_url_checker import (
+    has_any_url_refs,
+    has_any_verifiable_refs,
+    has_infobox,
+)
 
-# Check a page's references
+# URL-only view (strict: literal clickable links)
 has_url, total, url_count, samples = has_any_url_refs(wikitext)
+
+# Verifiable view (URL or identifier: doi/pmid/isbn/arxiv/...)
+has_v, total, v_count, samples = has_any_verifiable_refs(wikitext)
 
 # Check infobox presence
 has_box = has_infobox(wikitext)
 ```
+
+Named-ref resolution is **group-scoped** (keyed by `(group, name)`) so refs in
+separate footnote groups never cross-resolve — see "Pass 2" above.
 
 ### 🐍 Test Suite (`assets/test_ref_checker.py`)
 

@@ -9,7 +9,11 @@ Run:  python3 -m pytest test_ref_checker.py -v
 
 from __future__ import annotations
 
-from ref_url_checker import has_any_url_refs, has_infobox
+from ref_url_checker import (
+    has_any_url_refs,
+    has_any_verifiable_refs,
+    has_infobox,
+)
 
 
 # =========================================================================
@@ -340,3 +344,70 @@ def test_all_bad_npp_pattern():
     assert total == 2
     assert url_count == 0
     assert len(samples) == 2
+
+
+# =========================================================================
+# Group scoping — names are per-group, never bare (regression tests)
+# =========================================================================
+
+def test_group_scoped_reuse_does_not_resolve_cross_group():
+    """A reuse in group 'n' must NOT resolve a default-group definition."""
+    wt = ('Text.<ref group="n" name="apsis" />'
+          '<ref name="apsis">https://example.com/def</ref>')
+    has_url, total, url_count, _ = has_any_url_refs(wt)
+    # group "n" reuse has no URL of its own; default-group def is a separate name
+    assert has_url is True      # the default-group def itself has a URL
+    assert total == 2           # two distinct refs counted
+
+
+def test_group_scoped_name_collision_no_false_negative():
+    """Same bare name in two groups: default-group cite WITH url must count."""
+    wt = ('<ref group="n" name="apsis">note text, no url</ref>'
+          '<ref name="apsis">https://example.com/cite</ref>')
+    has_url, total, url_count, _ = has_any_url_refs(wt)
+    assert has_url is True
+    assert url_count == 1       # only the default-group cite has a URL
+    assert total == 2
+
+
+def test_group_same_name_same_group_reuse_resolves():
+    """Same group + same name: reuse resolves against the definition."""
+    wt = ('<ref group="n" name="apsis">https://example.com/note</ref>'
+          'more<ref group="n" name="apsis" />')
+    has_url, total, url_count, _ = has_any_url_refs(wt)
+    assert has_url is True
+    assert total == 1           # reuse deduplicated against the definition
+    assert url_count == 1
+
+
+# =========================================================================
+# Identifier-based verifiability — DOI/ISBN/PMID count as verifiable
+# =========================================================================
+
+def test_identifier_verifiability_doi():
+    """A DOI-only cite journal is verifiable (has_any_verifiable_refs)."""
+    wt = "<ref>{{cite journal |title=X |doi=10.1000/xyz123}}</ref>"
+    # Not a URL, so the URL-only checker says no...
+    _, _, url_count, _ = has_any_url_refs(wt)
+    assert url_count == 0
+    # ...but the verifiable checker counts it.
+    has_v, total, v_count, _ = has_any_verifiable_refs(wt)
+    assert has_v is True and total == 1 and v_count == 1
+
+
+def test_identifier_verifiability_isbn():
+    wt = "<ref>{{cite book |title=B |isbn=978-0-262-52316-5}}</ref>"
+    has_v, _, v_count, _ = has_any_verifiable_refs(wt)
+    assert has_v is True and v_count == 1
+
+
+def test_identifier_verifiability_arxiv():
+    wt = "<ref>{{cite arXiv |eprint=1234.56789}}</ref>"
+    has_v, _, v_count, _ = has_any_verifiable_refs(wt)
+    assert has_v is True and v_count == 1
+
+
+def test_no_identifier_no_url_unverifiable():
+    wt = "<ref>{{cite book |title=B |author=Smith |year=2020}}</ref>"
+    has_v, _, v_count, _ = has_any_verifiable_refs(wt)
+    assert has_v is False and v_count == 0

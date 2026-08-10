@@ -41,40 +41,23 @@ def has_any_url_refs(
         matches=lambda t: str(t.tag).strip().lower() == "ref"
     )
 
-    # ---- Step 2: Index named ref definitions ----
-    named_defs: dict[str, str] = {}
+    # ---- Step 2: Index named ref definitions, keyed by (group, name) ----
+    # Ref names are scoped per group (Cite extension): a reuse in group "n"
+    # does NOT resolve against a definition in the default group, and vice
+    # versa. Indexing by bare name would produce false "has URL" results.
+    named_defs: dict[tuple[str, str], str] = {}
     for tag in ref_tags:
         name = _named_ref_name(tag)
         content = _tag_content(tag)
-        if name and content and name not in named_defs:
-            named_defs[name] = content
+        if name and content:
+            key = (_ref_group(tag), name)
+            if key not in named_defs:
+                named_defs[key] = content
 
     # ---- Step 3: Evaluate each ref ----
-    total = 0
-    url_count = 0
-    bad_samples: list[str] = []
-    seen_named: set[str] = set()
-
-    for tag in ref_tags:
-        name = _named_ref_name(tag)
-        content = _tag_content(tag)
-
-        if not content and name:
-            content = named_defs.get(name, "")
-        elif not content:
-            continue
-
-        if name:
-            if name in seen_named:
-                continue
-            seen_named.add(name)
-
-        total += 1
-        if _ref_has_url(content, named_defs):
-            url_count += 1
-        else:
-            if len(bad_samples) < 5:
-                bad_samples.append(_summarize_ref(content))
+    total, url_count, bad_samples, _ = _evaluate_refs(
+        ref_tags, named_defs, _ref_has_url
+    )
 
     # ---- Step 4: Inline citation templates outside <ref> ----
     for template in parsed.filter_templates():
@@ -87,6 +70,82 @@ def has_any_url_refs(
                 url_count += 1
 
     return (url_count > 0, total, url_count, bad_samples)
+
+
+def has_any_verifiable_refs(
+    wikitext: str,
+) -> tuple[bool, int, int, list[str]]:
+    """Like ``has_any_url_refs`` but identifiers count as verifiable.
+
+    A DOI, PMID, PMCID, ISBN, ISSN, OCLC, JSTOR, Bibcode, arXiv, S2CID, or
+    eprint parameter makes a source verifiable online even without a URL
+    (identifiers resolve to landing pages / catalogs). Same return shape:
+    ``(has_verifiable, total_refs, verifiable_refs, sample_unverifiable)``.
+    """
+    parsed = mwparserfromhell.parse(wikitext)
+    ref_tags = parsed.filter_tags(
+        matches=lambda t: str(t.tag).strip().lower() == "ref"
+    )
+
+    named_defs: dict[tuple[str, str], str] = {}
+    for tag in ref_tags:
+        name = _named_ref_name(tag)
+        content = _tag_content(tag)
+        if name and content:
+            key = (_ref_group(tag), name)
+            if key not in named_defs:
+                named_defs[key] = content
+
+    def _is_verifiable(content: str, defs) -> bool:
+        return _ref_has_url(content, defs) or _ref_has_identifier(content)
+
+    total, ok_count, bad_samples, _ = _evaluate_refs(
+        ref_tags, named_defs, _is_verifiable
+    )
+
+    for template in parsed.filter_templates():
+        name = str(template.name).strip().lower()
+        if _is_citation_template(name):
+            if _is_inside_ref(template, ref_tags):
+                continue
+            total += 1
+            if _template_has_url_param(template) or _template_has_identifier_param(template):
+                ok_count += 1
+
+    return (ok_count > 0, total, ok_count, bad_samples)
+
+
+def _evaluate_refs(ref_tags, named_defs, check_fn) -> tuple[int, int, list[str], set]:
+    """Shared ref evaluation: returns (total, ok, bad_samples, seen_named)."""
+    total = 0
+    ok_count = 0
+    bad_samples: list[str] = []
+    seen_named: set[tuple[str, str]] = set()
+
+    for tag in ref_tags:
+        name = _named_ref_name(tag)
+        group = _ref_group(tag)
+        key = (group, name) if name else None
+        content = _tag_content(tag)
+
+        if not content and name:
+            content = named_defs.get(key, "")
+        elif not content:
+            continue
+
+        if key:
+            if key in seen_named:
+                continue
+            seen_named.add(key)
+
+        total += 1
+        if check_fn(content, named_defs):
+            ok_count += 1
+        else:
+            if len(bad_samples) < 5:
+                bad_samples.append(_summarize_ref(content))
+
+    return total, ok_count, bad_samples, seen_named
 
 
 def has_infobox(wikitext: str) -> bool:
@@ -142,6 +201,25 @@ def get_shortened_footnotes(
 
 URL_RE = re.compile(r"https?://", re.IGNORECASE)
 
+# Identifier parameters that make a source verifiable online WITHOUT a URL
+# (e.g. a DOI resolves to a landing page, an ISBN to a library catalog).
+# The skill's purpose is verifiability, and these identifiers satisfy it.
+IDENTIFIER_PARAMS = frozenset(
+    {
+        "doi",
+        "pmid",
+        "pmc",
+        "isbn",
+        "issn",
+        "oclc",
+        "jstor",
+        "bibcode",
+        "arxiv",
+        "s2cid",
+        "eprint",   # cite arXiv / cite bioRxiv
+    }
+)
+
 CITATION_TEMPLATES = frozenset(
     {
         "cite web",
@@ -188,7 +266,7 @@ SHORTENED_FOOTNOTE_TEMPLATES = frozenset(
 )
 
 
-def _ref_has_url(ref_text: str, named_defs: dict[str, str]) -> bool:
+def _ref_has_url(ref_text: str, named_defs: dict[tuple[str, str], str]) -> bool:
     """Return True if a single <ref> body contains a URL."""
     if _contains_raw_url(ref_text):
         return True
@@ -211,6 +289,39 @@ def _ref_has_url(ref_text: str, named_defs: dict[str, str]) -> bool:
                 if _contains_raw_url(str(param.value)):
                     return True
 
+    return False
+
+
+def _template_has_identifier_param(
+    template: mwparserfromhell.nodes.Template,
+) -> bool:
+    """True if the template carries a verifiable identifier (DOI, ISBN, ...)."""
+    for param in template.params:
+        name = str(param.name).strip().lower()
+        if name in IDENTIFIER_PARAMS:
+            value = str(param.value).strip()
+            if value and value.lower() not in ("none", "n/a"):
+                return True
+    return False
+
+
+def _ref_has_identifier(ref_text: str) -> bool:
+    """True if a ref body contains a verifiable identifier (DOI/ISBN/...)."""
+    try:
+        parsed = mwparserfromhell.parse(ref_text)
+    except Exception:
+        return False
+    for template in parsed.filter_templates():
+        if _template_has_identifier_param(template):
+            return True
+        for param in template.params:
+            try:
+                inner = mwparserfromhell.parse(str(param.value))
+                for nt in inner.filter_templates():
+                    if _template_has_identifier_param(nt):
+                        return True
+            except Exception:
+                continue
     return False
 
 
@@ -253,6 +364,23 @@ def _named_ref_name(tag: mwparserfromhell.nodes.Tag) -> str | None:
     if name_val and name_val[-1] in ('"', "'"):
         name_val = name_val[:-1]
     return name_val.strip() or None
+
+
+def _ref_group(tag: mwparserfromhell.nodes.Tag) -> str:
+    """Return the ref's group attribute ("" for the default group).
+
+    Refs are scoped per group: ``name="x"`` in group "n" is a DIFFERENT
+    name from ``name="x"`` in the default (unnamed) group. Definitions
+    must be resolved by the (group, name) pair, never by name alone.
+    """
+    if not tag.has("group"):
+        return ""
+    val = str(tag.get("group").value).strip()
+    if val and val[0] in ('"', "'"):
+        val = val[1:]
+    if val and val[-1] in ('"', "'"):
+        val = val[:-1]
+    return val.strip()
 
 
 def _tag_content(tag: mwparserfromhell.nodes.Tag) -> str:

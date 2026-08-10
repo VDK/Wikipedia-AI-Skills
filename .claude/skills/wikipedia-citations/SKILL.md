@@ -1,13 +1,13 @@
 ---
 name: wikipedia-citations
-description: Master Wikipedia citations — CS1/CS2 templates, Wayback Machine archiving, dead link detection, bare URL expansion, citation maintenance, and reference validation
-depends_on: [wikimedia-api-access]
+description: Master Wikipedia citations — CS1/CS2 templates, Wayback Machine archiving, dead link detection, bare URL expansion, citation maintenance, reference validation, and structural reference errors (broken refs, duplicate names, CheckWiki 81)
+depends_on: [wikimedia-api-access, wikimedia-wikitext]
 license: MIT
 compatibility: opencode
 skill_discovery_hints:
   - keywords: ["citation", "reference", "cite web", "cite book", "CS1", "Wayback Machine"]
   - keywords: ["dead link", "archive URL", "bare URL", "Citoid", "DOI", "ISBN"]
-last_verified: 2026-06-10
+last_verified: 2026-08-10
 ---
 
 > ⚠️ **User-Agent required:** API calls below need a descriptive `User-Agent` header.
@@ -338,57 +338,185 @@ template so a human editor knows what's wrong.
 
 ### Parse All Citation URLs from Wikitext
 
+> ⚠️ **Use mwparserfromhell, not regex.** Regex breaks on nested templates
+> (e.g. `|url={{URL|...}}` truncates at the inner `}}`), multi-line params,
+> and pipes inside wikilinks. See the **[wikimedia-wikitext](../wikimedia-wikitext/SKILL.md)**
+> skill for the full anti-pattern list. `citation_linter.py` in this skill's
+> `assets/` is the reference implementation.
+
 ```python
-import re, requests
+import mwparserfromhell as mw
 
-headers = {"User-Agent": "MyBot/1.0 (user@example.com) ContentGapResearch"}
-
-def extract_citations(page_title: str, lang: str = "en") -> list[dict]:
-    """Fetch page wikitext and extract all citation URLs and templates."""
-    domain = f"{lang}.wikipedia.org"
-    params = {
-        "action": "parse",
-        "page": page_title,
-        "prop": "wikitext",
-        "format": "json",
-    }
-    resp = requests.get(f"https://{domain}/w/api.php", params=params, headers=headers, timeout=30)
-    data = resp.json()
-    wikitext = data["parse"]["wikitext"]["*"]
-
+def extract_citations(wikitext: str) -> list[dict]:
+    """Extract all citation templates and bare URLs (AST, no regex)."""
+    parsed = mw.parse(wikitext)
     citations = []
 
-    # Pattern 1: Template-based citations
-    for match in re.finditer(r"\{\{(cite \w+)([^}]*)\}\}", wikitext, re.IGNORECASE):
-        template = match.group(1)
-        params_text = match.group(2)
-
-        # Extract url parameter
-        url_match = re.search(r"\|?\s*url\s*=\s*([^|\n}]+)", params_text)
-        url = url_match.group(1).strip() if url_match else None
-
-        # Extract archive-url
-        archive_match = re.search(r"\|?\s*archive-url\s*=\s*([^|\n}]+)", params_text)
-        archive_url = archive_match.group(1).strip() if archive_match else None
-
+    # Pattern 1: Template-based citations ({{cite ...}} / {{citation}})
+    for template in parsed.filter_templates():
+        name = str(template.name).strip().lower()
+        if not (name == "citation" or name.startswith("cite ")):
+            continue
+        params = {str(p.name).strip().lower(): str(p.value).strip()
+                  for p in template.params if str(p.name).strip()}
         citations.append({
-            "template": template,
-            "url": url,
-            "archive_url": archive_url,
-            "raw": match.group(0)[:200],  # Truncated for display
+            "template": name,
+            "url": params.get("url", ""),
+            "archive_url": params.get("archive-url", ""),
+            "has_identifier": any(
+                k in ("doi", "pmid", "pmc", "isbn", "arxiv", "eprint")
+                for k in params
+            ),
+            "raw": str(template)[:200],
         })
 
     # Pattern 2: Bare URLs inside <ref> tags
-    for match in re.finditer(r"<ref>(https?://[^\s<]+)</ref>", wikitext):
-        citations.append({
-            "template": "bare URL",
-            "url": match.group(1),
-            "archive_url": None,
-            "raw": match.group(0)[:200],
-        })
+    for tag in parsed.filter_tags(
+        matches=lambda t: str(t.tag).strip().lower() == "ref"
+    ):
+        if tag.contents is None:
+            continue
+        content = str(tag.contents).strip()
+        if content.startswith(("http://", "https://")):
+            citations.append({
+                "template": "bare URL",
+                "url": content,
+                "archive_url": "",
+                "has_identifier": False,
+                "raw": str(tag)[:200],
+            })
 
     return citations
 ```
+
+---
+
+## Reference: Reference Groups (`group=`) and Notes
+
+The Cite extension's `group` attribute partitions refs into **separate
+footnote namespaces**. Refs in different groups render as independent,
+separately-numbered lists, and **names are scoped per group**:
+
+```wikitext
+Regular citation.<ref>Source details</ref>
+Explanatory note.<ref group="notes">Extra explanation</ref>
+
+== Notes ==
+<references group="notes" />   <!-- renders only the notes group -->
+
+== References ==
+<references />                  <!-- renders only the default group -->
+```
+
+Key facts:
+
+- **Default group**: no `group=` attribute; rendered by plain
+  `<references/>` or `{{reflist}}`.
+- **Named groups** must have a matching `<references group="…"/>` or
+  `{{reflist|group=…}}` to display; a group without its list is a Cite error
+  ("group refs without references").
+- **Names are scoped per group**: `name="apsis"` in group `"n"` is a
+  different name from `name="apsis"` in the default group. Tooling must key
+  named-ref resolution by `(group, name)`.
+- **enwiki conventions**: `group="n"` / `group="note"` for a separate notes
+  list; `group="lower-alpha"` via `{{efn}}` / `{{notelist}}` for explanatory
+  footnotes (a, b, c…).
+- Group identifiers must contain alphabetic characters; a purely numeric
+  group name is a Cite error.
+- To reuse a note: `<ref group="notes" name="example" />`.
+
+---
+
+## SOP: Structural Reference Errors (broken refs & duplicates)
+
+Beyond template-level CS1 issues, refs themselves can be structurally broken.
+These are the most common problems and their tracking categories — the
+operational ground truth for citation maintenance on enwiki:
+
+| Problem | Wikitext signature | Tracking category (enwiki) | Live size (2026-08) |
+|---|---|---|---|
+| Undefined named ref | `<ref name="X" />` with no definition of X | Pages with broken reference names | 6,271 |
+| Duplicate name, different content | `<ref name="X">A</ref>…<ref name="X">B</ref>` | Pages with duplicate reference names | 38 |
+| Malformed ref markup | unclosed `<ref>`, bad params | Pages with reference errors | 6,771 |
+| Empty ref | `<ref></ref>` | Pages with incorrect ref formatting | 843 |
+| Refs with no list | refs present, no `<references/>`/`{{reflist}}` | Pages with missing references list | 40 |
+
+The Cite extension emits these as render-time errors; the tracking categories
+above are populated automatically. **CheckWiki** additionally scans for these
+as numbered checks (see
+[the error list](https://en.wikipedia.org/wiki/Wikipedia:WikiProject_Check_Wikipedia/List_of_errors))
+— notably **error 81 "Reference duplication"** (byte-identical `<ref>` tags
+repeated instead of named-and-reused) with a ~165K-article backlog on enwiki.
+
+### Detecting structural ref problems programmatically
+
+Parse with mwparserfromhell and resolve names per `(group, name)`:
+
+```python
+import mwparserfromhell as mw
+
+_refs = lambda parsed: parsed.filter_tags(
+    matches=lambda t: str(t.tag).strip().lower() == "ref")
+
+def group_name(tag):
+    """Return (group, name) — names are scoped per group."""
+    group = tag.get("group").value if tag.has("group") else ""
+    name = tag.get("name").value if tag.has("name") else None
+    return (str(group).strip().strip('"\''), str(name).strip().strip('"\'') if name else None)
+
+def structural_problems(wikitext: str) -> list[str]:
+    """Detect undefined reuses, duplicate names w/ different content, empties."""
+    parsed = mw.parse(wikitext)
+    tags = _refs(parsed)
+    defs: dict[tuple, str] = {}      # (group, name) -> content
+    dup_names: set = set()
+    empty: int = 0
+    for t in tags:
+        _, name = group_name(t)
+        content = str(t.contents).strip() if t.contents is not None else ""
+        is_reuse = t.self_closing or not content
+        if name and not is_reuse:
+            if group_name(t) in defs and defs[group_name(t)] != content:
+                dup_names.add(group_name(t))
+            defs[group_name(t)] = content
+        elif not is_reuse and not content:
+            empty += 1
+    problems = []
+    for t in tags:
+        _, name = group_name(t)
+        content = str(t.contents).strip() if t.contents is not None else ""
+        is_reuse = t.self_closing or not content
+        if is_reuse and name and group_name(t) not in defs:
+            problems.append(f"undefined named ref: {name!r}")
+    for g, n in sorted(dup_names):
+        problems.append(f"name defined with different content: {n!r}")
+    if empty:
+        problems.append(f"{empty} empty <ref></ref> tag(s)")
+    return problems
+```
+
+> 💡 The **dedupref** tool ([dedupref/core.py](https://github.com/alih/dedupref))
+> implements this fully — including CheckWiki-81 byte-identical merging — with
+> `dedup_refs(text)` and a 12-check `lint(text)` (severity-tagged findings with
+> line:col locations). For production use, prefer its tested implementation over
+> the sketch above.
+
+### Fixing duplicate references (CW81 pattern)
+
+Name the first occurrence and reuse the rest:
+
+```wikitext
+<!-- before -->
+First.<ref>Book ABC</ref> Again.<ref>Book ABC</ref>
+<!-- after -->
+First.<ref name="Unnamed-1">Book ABC</ref> Again.<ref name="Unnamed-1" />
+```
+
+Guardrails: merge only byte-identical, attribute-free refs; never touch refs
+inside templates/comments/`<nowiki>`; skip pages with nested refs; avoid name
+collisions (`Unnamed-N`, first free N); use a descriptive name (e.g. author +
+year) instead of `Unnamed-N` when the source is identifiable — descriptive
+names survive future edits better.
 
 ---
 
@@ -610,6 +738,34 @@ def generate_cite_journal(title: str, author: str, journal: str,
 
 ---
 
+## Reference: Sub-referencing (WMDE, rolling out 2026)
+
+Sub-referencing is the Wikimedia Deutschland technical wish that lets a source
+be cited once with details, then **reused with different details** (e.g.
+page numbers) without duplicating the full citation. It uses the `details`
+attribute on the reuse tag:
+
+```wikitext
+<ref name="Smith2020">{{cite book |last=Smith |title=... |year=2020}}</ref>
+Later page.<ref name="Smith2020" details="p. 42" />
+Another page.<ref name="Smith2020" details="p. 87" />
+```
+
+- Rendered as a single base footnote plus per-use detail notes.
+- **enwiki rollout is scheduled for 2026**; it is already live on some wikis
+  (German Wikipedia was the first pilot).
+- Tracking category: `Pages that use sub-references` (Cite extension).
+- Relevance to maintenance: the "same source, different details" pattern is
+  currently handled by duplicating citations or using `{{sfn}}`-style
+  author-date; sub-referencing is the long-term replacement. When writing new
+  citations or planning refactoring, prefer sub-references over duplicating a
+  full citation with slightly different page numbers **once they are available
+  on the target wiki**.
+- `dedupref`'s Tier 3 planning explicitly treats sub-referencing as the
+  preferred output mode for "same source, different details" merges.
+
+---
+
 ## Guardrails
 
 ### ❌ Never fabricate a citation
@@ -631,6 +787,18 @@ metadata extraction:
 - `newspaper` → For `{{cite news}}` — the publication name
 - `journal` → For `{{cite journal}}` — the academic journal name
 - `publisher` → For `{{cite book}}` — the publishing house
+
+### ⚠️ Don't ignore `group=` when resolving named refs
+Ref names are scoped per group. A reuse `<ref group="n" name="x" />` does
+NOT resolve against `<ref name="x">…</ref>` in the default group. Tooling that
+indexes named refs by bare name will produce false "undefined" and false
+"has URL" results — always key by `(group, name)`.
+
+### ⚠️ Don't write new refs with numeric or illegal names
+Per WP:REFNAME, ref names must not contain `# < > [ ] { } |` and should not be
+purely numeric (e.g. `:0`, `1`). Use descriptive names (`Smith-2015`);
+auto-generated `Unnamed-N` is acceptable for bulk maintenance but descriptive
+names survive future edits better.
 
 ### ⚠️ Respect Wayback Machine rate limits
 The `/save` endpoint is resource-intensive. Limit to 1–2 save requests
@@ -669,7 +837,7 @@ URL in a browser before relying on it.
 | [`assets/wayback_inspector.py`](./assets/wayback_inspector.py) | Check Wayback Machine for URL archives, save new ones | `python3 wayback_inspector.py https://example.com` |
 | [`assets/citoid_fetcher.py`](./assets/citoid_fetcher.py) | Auto-generate citations from URL/DOI/ISBN/PMID via the Citoid API | `python3 citoid_fetcher.py 10.7554/eLife.32259` |
 | [`assets/dead_link_scanner.py`](./assets/dead_link_scanner.py) | Scan a Wikipedia page for dead links and suggest archives | `python3 dead_link_scanner.py Albert_Einstein` |
-| [`assets/citation_linter.py`](./assets/citation_linter.py) | Parse and validate all citation templates in a page | `python3 citation_linter.py Albert_Einstein` |
+| [`assets/citation_linter.py`](./assets/citation_linter.py) | Parse and validate all citation templates in a page (AST-based; finds missing params, suspicious URLs, missing archives, identifier-only cites) | `python3 citation_linter.py Albert_Einstein` |
 | [`assets/citation_generator.py`](./assets/citation_generator.py) | Interactive CLI to generate citation templates | `python3 citation_generator.py` |
 
 ### 📚 Reference Docs
@@ -689,8 +857,10 @@ URL in a browser before relying on it.
 | Related Skill | Why |
 |--------------|-----|
 | **[wikimedia-api-access](../wikimedia-api-access/SKILL.md)** | User-Agent and API patterns |
+| **[wikimedia-wikitext](../wikimedia-wikitext/SKILL.md)** | AST parsing — required for reliable citation extraction (never regex) |
 | **[wikipedia-page-anatomy](../wikipedia-page-anatomy/SKILL.md)** | Article structure — where citations appear |
 | **[wikipedia-en-biography-writing](../wikipedia-en-biography-writing/SKILL.md)** | Biographies use citations extensively for BLP verification |
 | **[wikipedia-reference-verifiability](../wikipedia-reference-verifiability/SKILL.md)** | Complementary URL detection — find bare URLs and missing URL parameters |
 | **[wikipedia-categories](../wikipedia-categories/SKILL.md)** | Citation tracking categories for maintenance |
+| **[wikipedia-error-handling](../wikipedia-error-handling/SKILL.md)** | API failures, rate limits (fetching citations/archives) |
 

@@ -7,6 +7,10 @@ Reports:
   - Common issues (bare URLs, missing access-dates, no archives)
   - Template validity
 
+Parsing is done with mwparserfromhell (AST), NOT regex — regex breaks on
+nested templates, multi-line params, and pipes inside wikilinks (see the
+wikimedia-wikitext skill's anti-pattern list).
+
 Usage:
     python3 citation_linter.py Albert_Einstein
     python3 citation_linter.py Albert_Einstein --lang fr
@@ -16,12 +20,11 @@ Usage:
 
 import argparse
 import json
-import re
 import sys
 from collections import Counter
 
+import mwparserfromhell as mw
 import requests
-
 
 USER_AGENT = "CitationLinter/1.0 (user@example.com) ContentGapResearch"
 
@@ -59,6 +62,12 @@ RECOMMENDED_PARAMS = {
     "cite encyclopedia": ["year", "publisher"],
 }
 
+# Identifier params that make a citation verifiable even without a URL.
+IDENTIFIER_PARAMS = frozenset({
+    "doi", "pmid", "pmc", "isbn", "issn", "oclc", "jstor", "bibcode",
+    "arxiv", "s2cid", "eprint",
+})
+
 
 def fetch_wikitext(page_title: str, lang: str = "en") -> str | None:
     url = f"https://{lang}.wikipedia.org/w/api.php"
@@ -71,26 +80,43 @@ def fetch_wikitext(page_title: str, lang: str = "en") -> str | None:
         return None
 
 
-def extract_parameters(params_text: str) -> dict[str, str]:
-    """Extract key=value pairs from a template's parameter block."""
+def find_citation_templates(wikitext: str) -> list:
+    """Return all citation templates ({{cite ...}}, {{citation}}) as AST nodes.
+
+    Uses mwparserfromhell so nested templates, multi-line params, and pipes
+    inside wikilinks are handled correctly — the regex approach fails on all
+    three (e.g. |url={{URL|...}} truncates at the inner closing braces).
+    """
+    parsed = mw.parse(wikitext)
+    citations = []
+    for template in parsed.filter_templates():
+        name = str(template.name).strip().lower()
+        if name == "citation" or name.startswith("cite "):
+            citations.append(template)
+    return citations
+
+
+def extract_parameters(template) -> dict[str, str]:
+    """Extract key=value params from an mwparserfromhell Template node.
+
+    Handles positional (unnamed) params via their index as key.
+    """
     params = {}
-    # Match |key=value patterns (value can span multiple lines if no | or }})
-    for m in re.finditer(r"\|\s*(\w[\w-]*)\s*=\s*([^|\n}]+(?:\n[^|\n}]+)*)", params_text):
-        key = m.group(1).strip().lower()
-        value = m.group(2).strip()
-        params[key] = value
+    for i, param in enumerate(template.params, 1):
+        name = str(param.name).strip().lower()
+        value = str(param.value).strip()
+        if name:
+            params[name] = value
+        else:
+            params[str(i)] = value
     return params
 
 
-def lint_citation(match) -> dict:
-    """Lint a single citation template match."""
-    full = match.group(0)
-    tmpl_raw = match.group(1)
-    params_text = match.group(2)
-
-    tmpl_name = tmpl_raw.strip().lower()
-
-    params = extract_parameters(params_text)
+def lint_citation(template) -> dict:
+    """Lint a single citation template (AST node)."""
+    full = str(template)
+    tmpl_name = str(template.name).strip().lower()
+    params = extract_parameters(template)
 
     issues = []
 
@@ -106,10 +132,22 @@ def lint_citation(match) -> dict:
             if rec not in params:
                 issues.append(f"missing recommended: {rec}")
 
-    # Check URL validity if url parameter present
+    # Check URL validity if url parameter present (unwrap nested templates
+    # like {{URL|...}} — the value may legitimately be a template call)
     url = params.get("url", "")
-    if url and not url.startswith("http"):
-        issues.append(f"suspicious URL: {url[:60]}")
+    url_stripped = url
+    if url.startswith("{{"):
+        try:
+            inner = mw.parse(url)
+            # collect raw http(s) strings from template params
+            candidates = [str(p.value).strip() for t in inner.filter_templates()
+                          for p in t.params]
+            url_stripped = next((c for c in candidates
+                                 if c.startswith(("http://", "https://"))), url)
+        except Exception:
+            pass
+    if url_stripped and not url_stripped.startswith("http"):
+        issues.append(f"suspicious URL: {url_stripped[:60]}")
 
     # Check for archive without access-date
     if "archive-url" in params and "access-date" not in params:
@@ -123,16 +161,33 @@ def lint_citation(match) -> dict:
     if "doi" in params and tmpl_name not in ("cite journal", "cite conference"):
         issues.append(f"doi in {tmpl_name} (usually belongs in cite journal)")
 
+    has_identifier = any(k in IDENTIFIER_PARAMS and v for k, v in params.items())
+
     return {
         "template": tmpl_name,
-        "url": params.get("url", ""),
+        "url": url,
         "has_doi": "doi" in params,
+        "has_identifier": has_identifier,
         "has_archive": "archive-url" in params,
         "has_access_date": "access-date" in params,
         "param_count": len(params),
         "issues": issues,
         "raw": full[:150],
     }
+
+
+def find_bare_urls(wikitext: str) -> list[str]:
+    """Bare URLs inside <ref> tags (no citation template wrapper)."""
+    parsed = mw.parse(wikitext)
+    bare = []
+    for tag in parsed.filter_tags(matches=lambda t: str(t.tag).strip().lower() == "ref"):
+        if tag.contents is None:
+            continue
+        content = str(tag.contents).strip()
+        # Bare URL = content is (or starts with) an http(s) link with no template
+        if content.startswith(("http://", "https://")):
+            bare.append(content)
+    return bare
 
 
 def main():
@@ -152,21 +207,21 @@ def main():
         print("❌ Could not fetch page.", file=sys.stderr)
         sys.exit(1)
 
-    # Find all citation templates
-    matches = list(re.finditer(r"\{\{(cite\s+\w+)([^}]*)\}\}", wikitext, re.IGNORECASE))
-    bare_urls = re.findall(r"<ref>(https?://[^\s<]+)</ref>", wikitext)
+    templates = find_citation_templates(wikitext)
+    bare_urls = find_bare_urls(wikitext)
 
-    if not matches and not bare_urls:
+    if not templates and not bare_urls:
         print("No citations found.")
         return
 
-    results = [lint_citation(m) for m in matches]
+    results = [lint_citation(t) for t in templates]
 
     # Count stats
     tmpl_counts = Counter(r["template"] for r in results)
     total_issues = sum(len(r["issues"]) for r in results)
     with_archive = sum(1 for r in results if r["has_archive"])
     with_doi = sum(1 for r in results if r["has_doi"])
+    with_identifier = sum(1 for r in results if r["has_identifier"])
     with_access_date = sum(1 for r in results if r["has_access_date"])
 
     if args.output == "json":
@@ -179,6 +234,7 @@ def main():
             "templates": dict(tmpl_counts.most_common()),
             "with_archive": with_archive,
             "with_doi": with_doi,
+            "with_identifier": with_identifier,
             "with_access_date": with_access_date,
             "citations": results,
             "bare_urls": bare_urls,
@@ -191,6 +247,7 @@ def main():
         print(f"  Total issues:       {total_issues}")
         print(f"  With archive:       {with_archive}")
         print(f"  With DOI:           {with_doi}")
+        print(f"  With identifier:    {with_identifier}")
         print(f"  With access-date:   {with_access_date}")
         print()
         print("  Template breakdown:")
