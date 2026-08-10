@@ -1,6 +1,6 @@
 ---
 name: wikimedia-commons-categories
-description: Create and disambiguate Wikimedia Commons categories from Wikidata data - the occupation-from-country pattern, "by name" people categories, definite-article country phrases, pluralization, existence probing, and homonym disambiguation, distilled from the production Catapult gadget
+description: Create and disambiguate Wikimedia Commons categories from Wikidata data - the occupation-from-country pattern, "by name" people categories, definite-article country phrases, pluralization, existence probing, and homonym disambiguation, distilled from the production Catapult gadget. Recurring-event year categories (<Event> <YYYY>) live in the wikiportraits-event-series skill.
 license: MIT
 compatibility: opencode
 depends_on: [wikimedia-api-access, wikidata]
@@ -187,6 +187,15 @@ python3 .claude/skills/wikimedia-commons-categories/scripts/suggest_categories.p
   (P3831 = Q28840786); prefer `preferred` rank over normal.
 - **Category redirects carry no item.** If a candidate resolves to a redirect,
   follow it (action=query `redirects=1`) before deciding reuse vs creation.
+
+## Recurring events
+
+For recurring events (festivals, conferences, WikiPortraits event series) the
+year-category pattern (`<Event> <YYYY>` with `{{Wikidata Infobox}}`,
+`{{Decade years navbox}}`, `{{en|...}}`, numeric sortkeys) and the full
+Wikidata edition-item workflow (claims, P155/P156 chaining, edition numbering)
+live in the dedicated **[`wikiportraits-event-series`](../wikiportraits-event-series/SKILL.md)**
+skill.
 
 ## References
 
