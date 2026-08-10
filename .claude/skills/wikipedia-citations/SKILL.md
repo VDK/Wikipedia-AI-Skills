@@ -495,11 +495,11 @@ def structural_problems(wikitext: str) -> list[str]:
     return problems
 ```
 
-> 💡 The **dedupref** tool ([dedupref/core.py](https://github.com/alih/dedupref))
-> implements this fully — including CheckWiki-81 byte-identical merging — with
-> `dedup_refs(text)` and a 12-check `lint(text)` (severity-tagged findings with
-> line:col locations). For production use, prefer its tested implementation over
-> the sketch above.
+> 💡 The sketch above is intentionally minimal. For production use, prefer a
+> dedicated, tested implementation of this logic — e.g. a purpose-built
+> duplicate-reference tool, or pywikibot's `DuplicateReferences` helper as a
+> reference. Verify any tool's behavior on a sandbox page before running it
+> at scale.
 
 ### Fixing duplicate references (CW81 pattern)
 
@@ -761,8 +761,6 @@ Another page.<ref name="Smith2020" details="p. 87" />
   citations or planning refactoring, prefer sub-references over duplicating a
   full citation with slightly different page numbers **once they are available
   on the target wiki**.
-- `dedupref`'s Tier 3 planning explicitly treats sub-referencing as the
-  preferred output mode for "same source, different details" merges.
 
 ---
 
