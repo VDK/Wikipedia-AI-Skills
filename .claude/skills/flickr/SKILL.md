@@ -129,24 +129,37 @@ A whole-account transfer should land under a **per-account category** on Commons
 discoverable and future transfers can be deduplicated against them. Two production patterns
 (see `references/flickr-to-commons.md` for full details):
 
-**Organization / event account** — e.g. `Category:Photographs by Festival Salon`:
+**Organization / event account** — preferred `Category:Files from <account> Flickr stream`, e.g.
+`Category:Files from Festival Salon Flickr stream`:
 ```
-{{Flickr user category |id=31980831@N04|cat=p}}
-[[Category:Photographs by Flickr photographer]]
-[[Category:<subject category>]]
+{{Source category}}
+{{Flickr user category |id=31980831@N04|name=Festival Salon}}
+[[Category:<subject category>|Flickr]]
 ```
-The subject category links to the Wikidata item, which holds the `Flickr user ID` property
-(e.g. [Q3070609](https://www.wikidata.org/wiki/Q3070609) for Festival Salon).
+`{{Source category}}` + `{{Flickr user category}}` mark the category as a hidden **source
+category** and file it under `Category:Flickr streams` (a separate `{{Hiddencat}}` is superfluous
+and should not be added). The subject category links to the Wikidata item, which holds the
+`Flickr user ID` property (e.g. [Q3070609](https://www.wikidata.org/wiki/Q3070609) for Festival
+Salon). **Prefer the `Files from <account> Flickr stream` naming** for new account categories — it
+matches the current Commons convention (e.g. `Category:Files from Daisuke K Flickr stream`). The
+older `Category:Photographs by <account>` form (`{{Flickr user category |id=<NSID>|cat=p}}` +
+`[[Category:Photographs by Flickr photographer]]`) is still in wide use; reuse it if it already
+exists rather than renaming.
 
-**Photographer account** — e.g. `Category:Photographs by Anne Barth`:
+**Photographer account** — preferred `Category:Files from <photographer> Flickr stream`, e.g.
+`Category:Files from Anne Barth Flickr stream`:
 ```
-{{Hiddencat}}
-[[Category:Anne Barth]]
-[[Category:Photographs by photographer from <country>|Barthny, Anne ]]
+{{Source category}}
+{{Flickr user category |id=<NSID>|name=<username>}}
+[[Category:<photographer>]]
 ```
-The photographer gets a Wikidata item (with `{{Wikidata Infobox}}`) placed in
-`[[Category:Photographers from <country> by name]]` and, when known, gender categories such as
-`[[Category:Female photographers from <country>]]`.
+The photographer's standard work category (`Category:Photographs by <name>`) is the subject
+category — the Flickr *account* category itself uses the stream naming. `{{Flickr user category}}`
+links the category to the Flickr account and **hides the category automatically** (it emits
+`{{Hidden category}}` unless `hidden=no` or a source category is present) — a separate
+`{{Hiddencat}}` is superfluous and should not be added. The photographer gets a Wikidata item
+(with `{{Wikidata Infobox}}`) placed in `[[Category:Photographers from <country> by name]]` and,
+when known, gender categories such as `[[Category:Female photographers from <country>]]`.
 
 ## Already-transferred files (dedupe)
 
@@ -161,8 +174,9 @@ Commons:
   statement — see `references/flickr-to-commons.md` for the queries and the
   [wikimedia-commons-sdc](../wikimedia-commons-sdc/SKILL.md) skill for the underlying
   structured-data model.
-- If `Category:Photographs by <account>` exists, list its files and compare photo ids against the
-  photoset (the photo id is kept in every Commons filename: `Title (<id>).jpg`).
+- If the account category exists (`Category:Files from <account> Flickr stream`, or the older
+  `Category:Photographs by <account>`), list its files and compare photo ids against the photoset
+  (the photo id is kept in every Commons filename: `Title (<id>).jpg`).
 - Commons search: `Special:Search` with `insource:"flickr.com/photos/<nsid>"` finds files whose
   `{{Information}}` source or `{{Flickr}}` template links back to the account — which is why new
   uploads keep the NSID form in `Source` (see the flickr2commons-style descriptions below).
@@ -170,8 +184,8 @@ Commons:
 
 Drop already-transferred photos from the manifest (or report them separately) — do not re-upload.
 For the files you do upload, add the account category to each row's `categories` column
-(semicolon-separated), e.g. `Photographs by Festival Salon;Salon Festival international de musique
-de chambre de Provence`.
+(semicolon-separated), e.g. `Files from Festival Salon Flickr stream;Salon Festival international
+de musique de chambre de Provence`.
 
 ## SOP: Flickr → pattypan manifest → .xls
 
@@ -241,7 +255,7 @@ notes. The robust pattern:
 6. **Dates as text** in `YYYY-MM-DD HH:MM:SS` — don't let Excel/pattypan reinterpret them.
 7. **Categories come from the user/event**, not invented. Join with `;` for the pattypan `categories` column.
 8. **Escaping**: `| { }` in description/source text → `&#124;` / `&#123;` / `&#125;` so the `{{Information}}` template and FreeMarker don't break.
-9. **Account category + dedupe**: for a whole-account transfer, use a `Category:Photographs by <account>` on Commons (see the account-category patterns above) and exclude files already transferred (`insource:"flickr.com/photos/<nsid>"` or the account category listing) — never re-upload what's already there.
+9. **Account category + dedupe**: for a whole-account transfer, use a `Category:Files from <account> Flickr stream` on Commons (preferred — the older `Category:Photographs by <account>` is also valid; see the account-category patterns above) and exclude files already transferred (`insource:"flickr.com/photos/<nsid>"` or the account category listing) — never re-upload what's already there.
 
 ## References and assets
 
