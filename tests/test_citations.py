@@ -4,6 +4,7 @@ import sys
 from unittest.mock import MagicMock, patch
 from pathlib import Path
 
+import mwparserfromhell as mw
 import requests
 
 import pytest
@@ -219,73 +220,52 @@ class TestCitationGenerator:
 
 
 class TestCitationLinter:
+    @staticmethod
+    def _template(wikitext):
+        """Parse wikitext and return the first (and only) template node."""
+        return mw.parse(wikitext).filter_templates()[0]
+
     def test_extract_parameters(self):
-        params = citation_linter.extract_parameters("|url=https://example.com |title=Test |date=2026")
+        template = self._template("{{cite web |url=https://example.com |title=Test |date=2026}}")
+        params = citation_linter.extract_parameters(template)
         assert params["url"] == "https://example.com"
         assert params["title"] == "Test"
         assert params["date"] == "2026"
 
     def test_extract_parameters_multiline(self):
-        params = citation_linter.extract_parameters(
-            "|url=https://example.com\n |title=Long\n Title\n |date=2026"
+        template = self._template(
+            "{{cite web |url=https://example.com\n |title=Long\n Title\n |date=2026}}"
         )
+        params = citation_linter.extract_parameters(template)
         assert "url" in params
         assert "title" in params
         assert "date" in params
 
     def test_lint_citation_missing_required(self):
-        match_data = ("{{cite web |url=https://example.com}}", "cite web", " |url=https://example.com")
-        
-        class MockMatch:
-            def group(self, n):
-                return match_data[n]
-            def groupdict(self):
-                return {}
-        
-        result = citation_linter.lint_citation(MockMatch())
+        template = self._template("{{cite web |url=https://example.com}}")
+        result = citation_linter.lint_citation(template)
         assert result["template"] == "cite web"
         # title is missing, so there should be an issue about it
         assert any("title" in i for i in result["issues"])
 
     def test_lint_citation_complete(self):
-        match_data = (
-            "{{cite web |url=https://example.com |title=Test |website=Ex |access-date=2026}}",
-            "cite web",
-            " |url=https://example.com |title=Test |website=Ex |access-date=2026",
+        template = self._template(
+            "{{cite web |url=https://example.com |title=Test |website=Ex |access-date=2026}}"
         )
-        
-        class MockMatch:
-            def group(self, n):
-                return match_data[n]
-        
-        result = citation_linter.lint_citation(MockMatch())
+        result = citation_linter.lint_citation(template)
         assert result["template"] == "cite web"
         assert result["has_access_date"] is True
 
     def test_lint_citation_with_archive_no_access_date(self):
-        match_data = (
-            "{{cite web |url=https://example.com |title=T |archive-url=https://archive.org/web/...}}",
-            "cite web",
-            " |url=https://example.com |title=T |archive-url=https://archive.org/web/...",
+        template = self._template(
+            "{{cite web |url=https://example.com |title=T |archive-url=https://archive.org/web/...}}"
         )
-        
-        class MockMatch:
-            def group(self, n):
-                return match_data[n]
-        
-        result = citation_linter.lint_citation(MockMatch())
+        result = citation_linter.lint_citation(template)
         assert any("archive-url" in i and "access-date" in i for i in result["issues"])
 
     def test_lint_citation_url_status_no_archive(self):
-        match_data = (
-            "{{cite web |url=https://example.com |title=T |url-status=dead}}",
-            "cite web",
-            " |url=https://example.com |title=T |url-status=dead",
+        template = self._template(
+            "{{cite web |url=https://example.com |title=T |url-status=dead}}"
         )
-        
-        class MockMatch:
-            def group(self, n):
-                return match_data[n]
-        
-        result = citation_linter.lint_citation(MockMatch())
+        result = citation_linter.lint_citation(template)
         assert any("url-status" in i and "archive-url" in i for i in result["issues"])
