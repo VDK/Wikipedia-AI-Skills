@@ -326,7 +326,7 @@ live systems, and every skill is verified against them in CI
 |---|---|---|
 | CLI commands (`toolforge`, `pwb.py`, `webservice`, `sql`, `become`) | `scripts/command-registry.json` | `scripts/refresh-command-registry.py` (SSH to bastion + pywikibot repo) |
 | Action API modules (`action=`/`prop=`/`list=`/`meta=`) | `scripts/api-surface.json` | `scripts/refresh-api-surface.py` (live paraminfo, enwiki+wikidata+commons) |
-| External URLs (status checked) | `scripts/url-registry.json` | `scripts/refresh-url-registry.py` (polite HEAD sweep) |
+| External URLs (status checked) | `scripts/url-registry.json` | `scripts/refresh-url-registry.py` (incremental HEAD sweep, freshness rotation) |
 | Links/`depends_on`/wikilinks | — (offline) | `scripts/verify-links.py` |
 | Code snippet syntax (python/bash/json/js) | — (offline) | `scripts/verify-snippets.py` |
 | `last_verified` freshness | — (offline) | `scripts/verify-freshness.py` |
@@ -346,8 +346,16 @@ Refresh the registries when the underlying systems change (or every few months):
 ```bash
 TOOLFORGE_USER=<your-ldap-username> python3 scripts/refresh-command-registry.py
 python3 scripts/refresh-api-surface.py
-python3 scripts/refresh-url-registry.py   # ~10 min, polite pacing + UA
+python3 scripts/refresh-url-registry.py   # incremental: new + stale (>90d) + broken (>30d)
+python3 scripts/refresh-url-registry.py --new-only  # fast pre-push check after adding URLs
+python3 scripts/refresh-url-registry.py --full      # rare full audit of every URL
 ```
+URL refresh is incremental by default: a URL is only live-checked if it is new, outside the
+~3-month freshness window (`--max-age-days`), or a known-broken URL due for a retry
+(`--retry-after-days`). Known-good URLs are skipped, so normal runs check only the handful
+that rotated in — no more multi-minute sweeps on every change. CI's `verify-links.py` is fully
+offline; a scheduled workflow (`.github/workflows/url-registry-refresh.yml`, weekly) keeps the
+registry fresh automatically.
 
 Prose that *documents* removed commands ("the `toolforge tools...` family was
 removed"), error demos, illustrative placeholder URLs, and POST-only endpoints

@@ -1,21 +1,37 @@
 #!/usr/bin/env python3
 """refresh-url-registry.py — HEAD-check every external URL in the skills and
-record the status in url-registry.json (ground truth for verify-links.py).
-
-This is the live counterpart to the structural URL checks in verify-links.py:
+record the status in url-registry.json (ground truth for verify-links.py). This is the live counterpart to the structural URL checks in verify-links.py:
 it catches "URLs are not fabricated or guessed" (CONTRIBUTING checklist) by
-actually hitting the network. Run it when URLs change, or at the same cadence
-as the command registry refresh (every few months).
+actually hitting the network.
+
+Incremental by default (freshness rotation): a URL is only live-checked when
+it is
+  - new (never recorded before), or
+  - stale — last checked more than --max-age-days ago (default 90 = ~3 months),
+  - or broken — last status was 0/error or >= 400, and it was last checked
+    more than --retry-after-days ago (default 30; broken URLs are re-probed
+    sooner so recoveries get picked up).
+
+Known-good URLs within the freshness window are skipped entirely, so a normal
+run (manual or scheduled) only checks the handful of URLs that rotated in.
+There is no need for an unbounded full sweep on every commit — CI's
+verify-links.py is fully offline and only cross-checks against this registry.
+
+Useful invocations:
+    python3 scripts/refresh-url-registry.py                 # incremental (new + stale + broken)
+    python3 scripts/refresh-url-registry.py --new-only      # only URLs never checked (pre-push, fastest)
+    python3 scripts/refresh-url-registry.py --full          # re-check everything (rare full audit)
+    python3 scripts/refresh-url-registry.py --max-age-days 30   # tighter freshness window
 
 Wikimedia API etiquette is enforced: a descriptive User-Agent on every request
-($WIKIMEDIA_USER_AGENT when set), pacing between requests (--delay), and
-exponential backoff with Retry-After handling on HTTP 429.
+($WIKIMEDIA_USER_AGENT when set), pacing between requests (--delay, default 1s),
+and exponential backoff with Retry-After handling on HTTP 429.
 
-Usage:
-    python3 scripts/refresh-url-registry.py
-    python3 scripts/refresh-url-registry.py --delay 1.0 --limit 50  # test run
-
-Writes: scripts/url-registry.json   ({url: status_code})
+Writes: scripts/url-registry.json
+  { generated_at, generator, user_agent,
+    urls:       {url: status_code},   # status: -1 example, -2 post-only, 0 error, else HTTP code
+    checked_at: {url: ISO8601},       # when each URL was last live-checked
+    skip: {...} }
 """
 
 import argparse
@@ -24,7 +40,7 @@ import os
 import re
 import sys
 import time
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from urllib.parse import urlparse
 from urllib.request import Request, urlopen
@@ -41,18 +57,16 @@ USER_AGENT = os.environ.get(
     "wikipedia-ai-skills-url-registry/1.0 (https://github.com/fuzheado/Wikipedia-AI-Skills)",
 )
 
-
 def collect_urls(skills_dir: Path) -> list[str]:
     urls = set()
     for f in skills_dir.rglob("*.md"):
         for m in URL_RE.finditer(f.read_text()):
-            url = m.group(0).rstrip(".,;:!?*\\")
-            # trim unbalanced trailing paren (markdown link artifacts like
-            # .../Python_(programming_language))
+            url = m.group(0).rstrip(".,;:!?*\\")  # trim trailing punctuation
+            # trim unbalanced trailing paren (markdown link artifacts like #.../Python_(programming_language))
             while url.count("(") > url.count(")") and url.endswith("("):
                 url = url[:-1]
             if "{" in url or "}" in url or url in ("https://", "http://") or url.endswith("..."):
-                continue
+                continue  # templated URLs and "https://..." documentation patterns
             # SPARQL CONCAT prefixes like 'https://commons.wikimedia.org/entity/M'
             # (entity IDs always follow) are code fragments, not URLs
             if re.search(r"/[MQ]$", url):
@@ -63,16 +77,20 @@ def collect_urls(skills_dir: Path) -> list[str]:
             urls.add(url)
     return sorted(urls)
 
-
-# URLs that are legitimate documentation but can never succeed with GET/HEAD:
-# POST-only endpoints (Lift Wing :predict, Action API write actions, the
-# wd-vectordb query endpoint, etc.). Recorded for the registry's skip list.
+# URLs that are legitimate documentation but can never be verified with a
+# bare HEAD/GET: POST-only endpoints (Lift Wing :predict, Action API write
+# actions, the wd-vectordb query endpoint, etc.) and bare API endpoints that
+# require query parameters (web.archive.org CDX without url=). Recorded for
+# the registry's skip list.
 POST_ONLY_RE = re.compile(
-    r"""(?: :predict$ | /item/query/ | /property/query/ | /similarity-score/ |
-       /rest\.php/oauth2 | /rest\.php/oauth2/ |
-       api\.php\?action=(?:edit|upload|delete|move|import|login|logout|createaccount|
-       watch|patrol|rollback|protect|block|emailuser|undelete|revisiondelete|
-       suppression|changecontentmodel|stabilize|review) )"""
+    r"""(?:
+      :predict$ | /item/query/ | /property/query/ | /similarity-score/ |
+      /rest\.php/oauth2 | /rest\.php/oauth2/ |
+      web\.archive\.org/cdx/search/cdx$ |
+      api\.php\?action=(?:edit|upload|delete|move|import|login|logout|createaccount|
+      watch|patrol|rollback|protect|block|emailuser|undelete|revisiondelete|
+      suppression|changecontentmodel|stabilize|review)
+    )"""
 , re.I | re.X)
 
 # Clearly-illustrative example URLs that are not real resources
@@ -88,9 +106,23 @@ EXAMPLE_URL_RE = re.compile(
     )"""
 , re.I | re.X)
 
+def classify(url: str) -> int | None:
+    """Return the skip marker (-1 example, -2 post-only) or None if the URL
+    should be live-checked."""
+    if EXAMPLE_URL_RE.search(url):
+        return -1
+    if POST_ONLY_RE.search(url):
+        return -2
+    return None
 
 def check_url(url: str, timeout: float, delay: float) -> int:
-    """HEAD (fall back to GET) a URL, returning the final status code."""
+    """HEAD (fall back to GET) a URL, returning the final status code.
+
+    HEAD is preferred for politeness, but many servers mishandle it — some
+    return 404/405/501 to HEAD for URLs that work fine with GET (e.g. sites
+    that redirect on GET but not HEAD). So any 4xx/5xx from HEAD is retried
+    once with GET before being recorded.
+    """
     req = Request(url, method="HEAD", headers={"User-Agent": USER_AGENT})
     for attempt in range(3):
         try:
@@ -99,8 +131,13 @@ def check_url(url: str, timeout: float, delay: float) -> int:
         except HTTPError as e:
             if e.code == 429:
                 retry = float(e.headers.get("Retry-After", 2 ** attempt))
-                print(f"  429 {url} — backing off {retry}s", file=sys.stderr)
+                print(f" 429 {url} — backing off {retry}s", file=sys.stderr)
                 time.sleep(retry)
+                continue
+            # HEAD unsupported/mishandled — retry once with GET before trusting
+            # the HEAD status (400/404/405/501 are the classic HEAD artifacts)
+            if attempt == 0 and e.code in (400, 404, 405, 501):
+                req = Request(url, headers={"User-Agent": USER_AGENT})
                 continue
             return e.code
         except URLError as e:
@@ -113,68 +150,133 @@ def check_url(url: str, timeout: float, delay: float) -> int:
             return 0
     return 429
 
+def now_iso() -> str:
+    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+def parse_iso(s: str) -> datetime:
+    try:
+        return datetime.strptime(s, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
+    except (TypeError, ValueError):
+        return datetime.min.replace(tzinfo=timezone.utc)
+
+def load_registry() -> tuple[dict, dict]:
+    """Load url-registry.json. Returns (urls, checked_at), migrating the legacy
+    flat {url: status} format by backfilling checked_at from generated_at."""
+    urls, checked_at = {}, {}
+    if OUT.exists():
+        data = json.loads(OUT.read_text())
+        urls = data.get("urls", {})
+        checked_at = data.get("checked_at", {})
+        if not checked_at and urls:
+            # legacy format: every recorded URL approximates as checked at
+            # generation time (keeps verify-links.py fully backward compatible)
+            generated = data.get("generated_at", now_iso())
+            checked_at = {u: generated for u in urls}
+    return urls, checked_at
+
+def needs_check(url: str, status, checked_at_iso, now: datetime,
+                max_age_days: int, retry_after_days: int,
+                new_only: bool, full: bool) -> bool:
+    if full:
+        return True
+    if checked_at_iso is None:
+        return True  # never recorded
+    if new_only:
+        return False  # recorded at all — skip (new-only mode)
+    age = (now - parse_iso(checked_at_iso)).days
+    if status in (0,) or (isinstance(status, int) and status >= 400):
+        return age >= retry_after_days  # broken URLs re-probed sooner
+    return age >= max_age_days
 
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--skills-dir", type=Path, default=DEFAULT_SKILLS_DIR)
-    ap.add_argument("--delay", type=float, default=0.5,
-                    help="seconds between requests (Wikimedia etiquette)")
+    ap.add_argument("--delay", type=float, default=1.0,
+                    help="seconds between requests (Wikimedia etiquette; default 1.0)")
     ap.add_argument("--timeout", type=float, default=10.0)
     ap.add_argument("--limit", type=int, default=0, help="only check first N URLs (test)")
+    ap.add_argument("--max-age-days", type=int, default=90,
+                    help="re-check URLs last checked more than this many days ago "
+                         "(freshness window; default 90 = ~3 months)")
+    ap.add_argument("--retry-after-days", type=int, default=30,
+                    help="re-check known-broken URLs (status 0 or >= 400) older than "
+                         "this many days (default 30)")
+    ap.add_argument("--new-only", action="store_true",
+                    help="only check URLs never recorded before; skip all re-checks "
+                         "(fastest pre-push mode after adding URLs)")
+    ap.add_argument("--full", action="store_true",
+                    help="re-check every URL regardless of freshness (rare full audit)")
     ap.add_argument("--resume", action="store_true",
-                    help="skip URLs already recorded in the registry file")
+                    help="kept for backwards compatibility — incremental freshness "
+                         "mode is now the default, so this flag is a no-op")
     args = ap.parse_args(argv)
 
     urls = collect_urls(args.skills_dir)
     if args.limit:
         urls = urls[: args.limit]
-    print(f"{len(urls)} URLs to check (delay={args.delay}s)", file=sys.stderr)
 
-    known = {}
-    if args.resume and OUT.exists():
-        known = json.loads(OUT.read_text()).get("urls", {})
-        # re-apply classification to previously recorded URLs so example /
-        # post-only entries keep their skip markers without re-fetching
-        for u in list(known):
-            if EXAMPLE_URL_RE.search(u):
-                known[u] = -1
-            elif POST_ONLY_RE.search(u):
-                known[u] = -2
-        print(f"resuming with {len(known)} already recorded (reclassified)", file=sys.stderr)
+    known, checked_at = load_registry()
+    print(f"{len(urls)} URLs found; {len(known)} recorded "
+          f"(delay={args.delay}s, max-age={args.max_age_days}d, "
+          f"retry-broken={args.retry_after_days}d)", file=sys.stderr)
 
-    registry = {"generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
-                "generator": "scripts/refresh-url-registry.py",
-                "user_agent": USER_AGENT,
-                "urls": dict(known),
-                "skip": {"post_only": "POST-only endpoints (HEAD/GET cannot verify)",
-                         "example": "illustrative placeholder URLs"}}
-    bad = 0
-    pending = [u for u in urls if u not in known]
-    for i, url in enumerate(pending, 1):
-        if EXAMPLE_URL_RE.search(url):
-            registry["urls"][url] = -1  # illustrative placeholder — never fetch
-            print(f"  [{i}/{len(pending)}] skip example {url}", file=sys.stderr)
-        elif POST_ONLY_RE.search(url):
-            registry["urls"][url] = -2  # POST-only endpoint — HEAD cannot verify
-            print(f"  [{i}/{len(pending)}] skip post-only {url}", file=sys.stderr)
-        else:
-            status = check_url(url, args.timeout, args.delay)
-            registry["urls"][url] = status
-            if status >= 400:
-                bad += 1
-                print(f"  [{i}/{len(pending)}] {status} {url}", file=sys.stderr)
-            elif i % 25 == 0:
-                print(f"  [{i}/{len(pending)}] ...", file=sys.stderr)
-        time.sleep(args.delay)
-        # incremental save: never lose progress on interruption
+    now = datetime.now(timezone.utc)
+    registry = {
+        "generated_at": now_iso(),
+        "generator": "scripts/refresh-url-registry.py",
+        "user_agent": USER_AGENT,
+        "urls": dict(known),
+        "checked_at": dict(checked_at),
+        "skip": {"post_only": "POST-only or parameter-required endpoints "
+                              "(bare HEAD/GET cannot verify)",
+                 "example": "illustrative placeholder URLs"},
+    }
+
+    def save():
         OUT.write_text(json.dumps(registry, indent=1, sort_keys=True) + "\n")
 
-    # final save (covers the no-pending case where the loop never writes)
-    OUT.write_text(json.dumps(registry, indent=1, sort_keys=True) + "\n")
-    print(f"\nRegistry written to {OUT}", file=sys.stderr)
-    print(f"  {len(pending)} URLs checked, {bad} with status >= 400", file=sys.stderr)
-    return 0
+    # Decide what to check this run (before mutating anything)
+    plan = []  # (url, reason)
+    for u in urls:
+        marker = classify(u)
+        if marker is not None:
+            registry["urls"][u] = marker          # skip markers never need a fetch
+            if u not in checked_at:
+                checked_at[u] = now_iso()          # classify counts as "known"
+            continue
+        status = known.get(u)
+        if needs_check(u, status, checked_at.get(u), now,
+                       args.max_age_days, args.retry_after_days,
+                       args.new_only, args.full):
+            reason = ("new" if u not in known
+                      else "broken-retry" if (status in (0,) or (isinstance(status, int) and status >= 400))
+                      else f"stale-{args.max_age_days}d")
+            plan.append((u, reason))
 
+    print(f" {len(plan)} URL(s) to live-check "
+          f"({len(urls) - len(plan) - sum(1 for u in urls if classify(u) is not None)} fresh/skip "
+          f"skipped)", file=sys.stderr)
+
+    bad = 0
+    for i, (url, reason) in enumerate(plan, 1):
+        status = check_url(url, args.timeout, args.delay)
+        registry["urls"][url] = status
+        registry["checked_at"][url] = now_iso()
+        if status >= 400:
+            bad += 1
+        print(f" [{i}/{len(plan)}] ({reason}) {status} {url}", file=sys.stderr)
+        if i % 25 == 0:
+            print(f" [{i}/{len(plan)}]...", file=sys.stderr)
+        time.sleep(args.delay)  # pacing (Wikimedia etiquette)
+        save()  # incremental save: never lose progress on interruption
+
+    save()  # final save (also covers the no-pending case)
+    print(f"\nRegistry written to {OUT}", file=sys.stderr)
+    print(f" {len(plan)} URLs checked, {bad} with status >= 400, "
+          f"{sum(1 for u in urls if classify(u) is not None)} skip-classified, "
+          f"{len(urls) - len(plan) - sum(1 for u in urls if classify(u) is not None)} skipped (fresh).",
+          file=sys.stderr)
+    return 0
 
 if __name__ == "__main__":
     sys.exit(main())

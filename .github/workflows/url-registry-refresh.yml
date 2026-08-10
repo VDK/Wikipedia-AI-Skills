@@ -1,0 +1,42 @@
+name: URL Registry Refresh
+on:
+  schedule:
+    # Weekly on Tuesday at 07:00 UTC — keep the URL registry fresh without
+    # blocking commits: each run only re-checks URLs outside the freshness
+    # window (default 90 days) plus new URLs, so runs are small and bounded.
+    - cron: '0 7 * * 2'
+  workflow_dispatch:  # Allow manual trigger
+
+permissions:
+  contents: write
+
+jobs:
+  refresh-registry:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Incremental URL refresh (freshness rotation)
+        run: python3 scripts/refresh-url-registry.py
+        env:
+          WIKIMEDIA_USER_AGENT: wikipedia-ai-skills-url-registry/1.0 (scheduled GitHub Action; https://github.com/fuzheado/Wikipedia-AI-Skills)
+
+      - name: Commit refreshed registry
+        # Push by the default GITHUB_TOKEN does not re-trigger workflows, so
+        # this cannot loop. If main is branch-protected and this push fails,
+        # open a PR with scripts/url-registry.json instead.
+        run: |
+          if git diff --quiet scripts/url-registry.json; then
+            echo "Registry unchanged — nothing to commit."
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add scripts/url-registry.json
+            git commit -m "chore(links): refresh url-registry (incremental freshness run)"
+            git push
+          fi

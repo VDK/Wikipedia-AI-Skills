@@ -14,6 +14,12 @@ URL *status* checking is handled against the checked-in url-registry.json
 recorded with a non-2xx status, or not recorded at all, is a violation. This
 makes "URLs are not fabricated or guessed" (CONTRIBUTING checklist) enforced.
 
+All of the above is offline — no network is touched in CI. The registry is
+kept current by the incremental refresh (freshness rotation, see
+refresh-url-registry.py) and the scheduled url-registry-refresh workflow. If
+the registry is older than --max-registry-age-days (default 90), a non-fatal
+warning is printed so staleness is visible instead of accumulating silently.
+
 Usage:
     python3 scripts/verify-links.py
     python3 scripts/verify-links.py --no-url-registry   # structural checks only
@@ -25,6 +31,7 @@ import argparse
 import json
 import re
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -132,6 +139,7 @@ EXAMPLE_URL_RE = re.compile(
 POST_ONLY_RE = re.compile(
     r"""(?: :predict$ | /item/query/ | /property/query/ | /similarity-score/ |
        /rest\.php/oauth2 | /rest\.php/oauth2/ |
+       web\.archive\.org/cdx/search/cdx$ |
        api\.php\?action=(?:edit|upload|delete|move|import|login|logout|createaccount|
        watch|patrol|rollback|protect|block|emailuser|undelete|revisiondelete|
        suppression|changecontentmodel|stabilize|review) )"""
@@ -150,9 +158,28 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--url-registry", type=Path, default=DEFAULT_URL_REGISTRY)
     ap.add_argument("--no-url-registry", action="store_true",
                     help="skip URL registry cross-check (structural checks only)")
+    ap.add_argument("--max-registry-age-days", type=int, default=90,
+                    help="warn if url-registry.json is older than this many days "
+                         "(default 90; informational, never a failure)")
     args = ap.parse_args(argv)
 
     url_registry = None if args.no_url_registry else load_registry(args.url_registry)
+
+    # Registry staleness: informational only. The scheduled refresh workflow
+    # keeps the registry current; this warns if that has stopped happening.
+    if url_registry is not None:
+        gen = url_registry.get("generated_at")
+        if gen:
+            try:
+                generated = datetime.strptime(gen, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
+                age = (datetime.now(timezone.utc) - generated).days
+                if age > args.max_registry_age_days:
+                    print(f"  (warn) url-registry.json is {age} days old (>"
+                          f"{args.max_registry_age_days}); run scripts/refresh-url-registry.py "
+                          f"or check the scheduled refresh workflow", file=sys.stderr)
+            except ValueError:
+                print(f"  (warn) url-registry.json has unparseable generated_at: {gen!r}",
+                      file=sys.stderr)
 
     all_problems = []
     files = sorted(args.skills_dir.rglob("SKILL.md")) + sorted(args.skills_dir.rglob("references/*.md"))
