@@ -132,37 +132,39 @@ discoverable and future transfers can be deduplicated against them. Two producti
 **Organization / event account** — preferred `Category:Files from <account> Flickr stream`, e.g.
 `Category:Files from Festival Salon Flickr stream`:
 ```
-{{Flickr user category |id=31980831@N04|name=Festival Salon|cat=p}}
+{{Flickr user category |id=31980831@N04|name=Festival Salon}}
 [[Category:<subject category>|Flickr]]
 ```
-`{{Flickr user category}}` links the Flickr account and, with `cat=p`, files the category under
-`Category:Photographs by Flickr photographer` — the parent that holds **both** the older
-`Category:Photographs by <account>` and the current `Category:Files from <account> Flickr stream`
-forms. It **hides the category automatically** (emits `{{Hidden category}}` unless `hidden=no`);
-a separate `{{Source category}}` or `{{Hiddencat}}` line is superfluous and should not be added
-(`{{Source category}}` would additionally dump the category into the redundant flat list
-`Category:Source categories (flat list)`). Use `cat=f` instead of `cat=p` to file under the
-broader `Category:Flickr streams`. The subject category links to the Wikidata item, which holds
-the `Flickr user ID` property (e.g. [Q3070609](https://www.wikidata.org/wiki/Q3070609) for Festival
-Salon). **Prefer the `Files from <account> Flickr stream` naming** for new account categories — it
-matches the current Commons convention (e.g. `Category:Files from Daisuke K Flickr stream`). The
-older `Category:Photographs by <account>` form is still in wide use; reuse it if it already
-exists rather than renaming.
+Without `cat=p`, `{{Flickr user category}}` files the category under `Category:Flickr streams` — the
+parent for **organisation/event streams** (accounts of a corporation or event, not tied to a single
+photographer). It **hides the category automatically** (emits `{{Hidden category}}` unless
+`hidden=no`); a separate `{{Source category}}` or `{{Hiddencat}}` line is superfluous and should not
+be added (`{{Source category}}` would additionally dump the category into the redundant flat list
+`Category:Source categories (flat list)`). The subject category links to the Wikidata item, which
+holds the `Flickr user ID` property (e.g. [Q3070609](https://www.wikidata.org/wiki/Q3070609) for
+Festival Salon). **Prefer the `Files from <account> Flickr stream` naming** for new account
+categories — it matches the current Commons convention (e.g. `Category:Files from Daisuke K Flickr
+stream`). The older `Category:Photographs by <account>` form (`cat=p`, under
+`Category:Photographs by Flickr photographer`) is still in wide use; reuse it if it already exists
+rather than renaming.
 
-**Photographer account** — preferred `Category:Files from <photographer> Flickr stream`, e.g.
-`Category:Files from Anne Barth Flickr stream`:
+**Photographer account** — an account tied to a **single individual photographer** whose Flickr
+feed is their main outlet (e.g. Sebastiaan ter Burg). Preferred `Category:Photographs by
+<photographer>`, e.g. `Category:Photographs by Anne Barth`:
 ```
 {{Flickr user category |id=<NSID>|name=<username>|cat=p}}
-[[Category:<photographer>]]
 ```
-The photographer's standard work category (`Category:Photographs by <name>`) is the subject
-category — the Flickr *account* category itself uses the stream naming and is filed (via `cat=p`)
-under `Category:Photographs by Flickr photographer`, alongside the `Photographs by <name>` forms.
-`{{Flickr user category}}` links the category to the Flickr account and **hides it automatically**
-(`{{Hidden category}}` unless `hidden=no`); a separate `{{Source category}}` or `{{Hiddencat}}` is
-superfluous. The photographer gets a Wikidata item (with `{{Wikidata Infobox}}`) placed in
-`[[Category:Photographers from <country> by name]]` and, when known, gender categories such as
-`[[Category:Female photographers from <country>]]`.
+`cat=p` files the account category under `Category:Photographs by Flickr photographer` — the parent
+for accounts belonging to one person, distinct from the `Category:Flickr streams` parent used for
+organisation/event streams above. `{{Flickr user category}}` links the category to the Flickr
+account and **hides it automatically** (`{{Hidden category}}` unless `hidden=no`); a separate
+`{{Source category}}` or `{{Hiddencat}}` is superfluous. The photographer gets a Wikidata item
+(with `{{Wikidata Infobox}}`) placed in `[[Category:Photographers from <country> by name]]` and,
+when known, gender categories such as `[[Category:Female photographers from <country>]]`.
+
+
+Real example (Sebastiaan ter Burg, NSID `31013861@N00`): `Category:Photographs by Sebastiaan ter
+Burg` — `{{Flickr user category |id=31013861@N00|name=Sebastiaan ter Burg|cat=p}}`.
 
 ## Already-transferred files (dedupe)
 

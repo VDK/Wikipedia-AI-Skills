@@ -111,63 +111,62 @@ check "is this photo already here?" later.
 Preferred: `Category:Files from <account name> Flickr stream` containing:
 
 ```
-{{Flickr user category |id=<NSID>|name=<account name>|cat=p}}
+{{Flickr user category |id=<NSID>|name=<account name>}}
 [[Category:<subject category>|Flickr]]
 ```
 
-- `{{Flickr user category}}` links the account and, with `cat=p`, files the category under
-  `Category:Photographs by Flickr photographer` — the parent that holds **both** the older
-  `Category:Photographs by <account>` and the current `Category:Files from <account> Flickr stream`
-  forms. It **hides the category automatically** (emits `{{Hidden category}}` unless `hidden=no`);
-  a separate `{{Source category}}` or `{{Hiddencat}}` line is superfluous (`{{Source category}}`
-  would only add the redundant `Category:Source categories (flat list)`). Use `cat=f` instead to
-  file under the broader `Category:Flickr streams`.
+- Without `cat=p`, `{{Flickr user category}}` files the category under `Category:Flickr streams` —
+  the parent for **organisation/event streams** (corporate and event accounts not tied to a single
+  photographer). It **hides the category automatically** (emits `{{Hidden category}}` unless
+  `hidden=no`); a separate `{{Source category}}` or `{{Hiddencat}}` line is superfluous
+  (`{{Source category}}` would only add the redundant `Category:Source categories (flat list)`).
 - The subject category (e.g. `Category:Salon Festival international de musique de chambre de
   Provence`) is the real-world subject and connects to the Wikidata item — the item carries the
   `Flickr user ID` (P3267) property (e.g. [Q3070609](https://www.wikidata.org/wiki/Q3070609) for
   Festival Salon), which is the same NSID the API uses.
 
 Real example (Festival Salon, NSID `31980831@N04`):
-`Category:Files from Festival Salon Flickr stream` → `{{Flickr user category |id=31980831@N04|name=Festival Salon|cat=p}}` +
+`Category:Files from Festival Salon Flickr stream` — `{{Flickr user category |id=31980831@N04|name=Festival Salon}}` +
 `[[Category:Salon Festival international de musique de chambre de Provence|Flickr]]`.
 
-The `Files from <account> Flickr stream` naming is the **preferred** convention for Flickr account
-categories (e.g. `Category:Files from Daisuke K Flickr stream`). The older `Photographs by <account>`
-form — `{{Flickr user category |id=<NSID>|cat=p}}` + `[[Category:Photographs by Flickr photographer]]`
-— is still in wide use and lives in the same parent; reuse it when the category already exists
-rather than renaming.
+The `Files from <account> Flickr stream` naming is the **preferred** convention for organisation
+and event account categories (e.g. `Category:Files from Daisuke K Flickr stream`). The older
+`Photographs by <account>` form — `{{Flickr user category |id=<NSID>|cat=p}}` +
+`[[Category:Photographs by Flickr photographer]]` — is still in wide use (and is the correct form
+for an *individual photographer's* account, see below) and lives under
+`Category:Photographs by Flickr photographer`; reuse it when the category already exists rather
+than renaming.
 
 ### Photographer account
 
-Preferred: `Category:Files from <photographer> Flickr stream` containing:
+An account tied to a **single individual photographer** (their main Flickr outlet, e.g. Sebastiaan
+ter Burg). Preferred: `Category:Photographs by <photographer>` containing:
 
 ```
 {{Flickr user category |id=<NSID>|name=<username>|cat=p}}
-[[Category:<photographer>]]
 ```
 
-- `{{Flickr user category}}` links the category to the Flickr account, files it under
-  `Category:Photographs by Flickr photographer` (`cat=p`), and **adds the hidden-category behavior
-  automatically** (the template emits `{{Hidden category}}` unless `hidden=no`) — a separate
-  `{{Source category}}` or `{{Hiddencat}}` line is superfluous and should not be added.
-- The photographer's standard work category (`Category:Photographs by <name>`, plus
-  `[[Category:Photographs by photographer from <country>|<sortkey> ]]`) is the subject category; the
-  Flickr *account* category itself uses the stream naming. Reuse `Category:Photographs by <name>`
-  as the account category too when it already exists (a common legacy layout).
+- `cat=p` files the account category under `Category:Photographs by Flickr photographer`, the
+  parent for accounts belonging to one person (distinct from the `Category:Flickr streams` parent
+  used for organisation/event streams above). `{{Flickr user category}}` also **adds the
+  hidden-category behavior automatically** (emits `{{Hidden category}}` unless `hidden=no`) — a
+  separate `{{Source category}}` or `{{Hiddencat}}` line is superfluous and should not be added.
 - The photographer gets their own Wikidata item with `{{Wikidata Infobox}}`, categorized via
   `[[Category:Photographers from <country> by name]]` and, when known, gender categories
   (`[[Category:Female photographers from <country>]]`).
 
 Real example (re:publica / Anne Barth):
-`Category:Files from Anne Barth Flickr stream` → `{{Flickr user category |id=<NSID>|name=...|cat=p}}` +
-`[[Category:Photographs by Anne Barth]]`;
-the legacy `Category:Photographs by Anne Barth` (`{{Flickr user category |id=<NSID>|name=...}}` +
-`[[Category:Anne Barth]]` + `[[Category:Photographs by photographer from Germany|Barthny, Anne ]]`)
-is still valid and in use. Anne Barth has a Wikidata item with `{{Wikidata Infobox}}`,
-`[[Category:Photographers from Germany by name]]`,
-`[[Category:Female photographers from Germany]]`. (The older `{{Hiddencat}}`/`{{Source category}}`
-forms predate `{{Flickr user category}}`; migrate them to the template, which handles the hiding
-itself.)
+`Category:Photographs by Anne Barth` — `{{Flickr user category |id=<NSID>|name=...|cat=p}}`; the
+account category doubles as her work category, with `[[Category:Photographs by photographer from
+Germany|Barthny, Anne ]]`. (The older `{{Hiddencat}}`/`{{Source category}}` forms predate
+`{{Flickr user category}}`; migrate them to the template, which handles the hiding itself.)
+
+
+Real example (Sebastiaan ter Burg, NSID `31013861@N00`): `Category:Photographs by Sebastiaan ter
+Burg` — `{{Flickr user category |id=31013861@N00|name=Sebastiaan ter Burg|cat=p}}`. (His existing
+Commons category still uses the legacy `{{flickr user|31013861@N00}}` layout with a manual
+`[[Category:Photographs by Flickr photographer]]`; the template form above is the current
+equivalent.)
 
 ### Per-file categories
 
