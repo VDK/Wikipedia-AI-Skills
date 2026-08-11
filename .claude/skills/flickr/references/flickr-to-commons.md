@@ -154,12 +154,11 @@ ter Burg). Preferred: `Category:Photographs by <photographer>` containing:
 - The photographer gets their own Wikidata item with `{{Wikidata Infobox}}`, categorized via
   `[[Category:Photographers from <country> by name]]` and, when known, gender categories
   (`[[Category:Female photographers from <country>]]`).
-
-Real example (re:publica / Anne Barth):
-`Category:Photographs by Anne Barth` — `{{Flickr user category |id=<NSID>|name=...|cat=p}}`; the
-account category doubles as her work category, with `[[Category:Photographs by photographer from
-Germany|Barthny, Anne ]]`. (The older `{{Hiddencat}}`/`{{Source category}}` forms predate
-`{{Flickr user category}}`; migrate them to the template, which handles the hiding itself.)
+- A `Category:Photographs by <name>` is only the *account* category when it is linked to
+  that person's own Flickr account via `{{Flickr user category}}`. If the photos instead
+  came through an organisation's stream (e.g. re:publica), the account category is
+  `Files from <organisation> Flickr stream` and `Category:Photographs by <name>` is just
+  the photographer's work category — not an account category.
 
 
 Real example (Sebastiaan ter Burg, NSID `31013861@N00`): `Category:Photographs by Sebastiaan ter

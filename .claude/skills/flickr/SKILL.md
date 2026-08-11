@@ -150,7 +150,7 @@ rather than renaming.
 
 **Photographer account** — an account tied to a **single individual photographer** whose Flickr
 feed is their main outlet (e.g. Sebastiaan ter Burg). Preferred `Category:Photographs by
-<photographer>`, e.g. `Category:Photographs by Anne Barth`:
+<photographer>`, e.g. `Category:Photographs by Sebastiaan ter Burg`:
 ```
 {{Flickr user category |id=<NSID>|name=<username>|cat=p}}
 ```
@@ -160,7 +160,11 @@ organisation/event streams above. `{{Flickr user category}}` links the category 
 account and **hides it automatically** (`{{Hidden category}}` unless `hidden=no`); a separate
 `{{Source category}}` or `{{Hiddencat}}` is superfluous. The photographer gets a Wikidata item
 (with `{{Wikidata Infobox}}`) placed in `[[Category:Photographers from <country> by name]]` and,
-when known, gender categories such as `[[Category:Female photographers from <country>]]`.
+when known, gender categories such as `[[Category:Female photographers from <country>]]`. A `Category:Photographs by <name>` is only the *account* category when it is linked to
+that person's own Flickr account via `{{Flickr user category}}`. If the photos instead
+came through an organisation's stream (e.g. re:publica), the account category is
+`Files from <organisation> Flickr stream` and `Category:Photographs by <name>` is just
+the photographer's work category — not an account category.
 
 
 Real example (Sebastiaan ter Burg, NSID `31013861@N00`): `Category:Photographs by Sebastiaan ter
