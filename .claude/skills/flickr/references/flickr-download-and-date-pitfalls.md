@@ -19,11 +19,20 @@ Observed behaviour:
 - Once the 429s start, in-burst retries do **not** help — each retry inside the
   same wave also 429s and can extend the block. Retrying an ID that 429'd in
   the same pass wastes time.
-- **After a ~10 minute pause the blocked URLs recover** and download fine. The
-  block is per-IP/global, not per-URL.
-- Escalating per-request backoff (120s → 240s → 360s …) inside one pass works,
-  but it is wasteful: it lets the limiter recover mid-pass at the cost of long
-  idle sleeps.
+- ⚠️ **Recovery is NOT a fixed ~10 minutes** (corrected 2026-08-10, 518-file
+  transfer; earlier notes claimed ~10 min): the block is per-IP/global, not
+  per-URL, and for sustained bursts the window lasts **~60 minutes after the
+  last 429 in the burst** — each probe or retry during the block can extend
+  it. Observed cycles: ~85-160 downloads per ~60-min window, then hard 429s
+  until the window slides. A lone 429 after a short burst can clear in ~10
+  min; a sustained burst does not.
+- **The working pattern for batch downloads:** on the first 429, pause ~600s and
+  retry the same file (up to 3-4 attempts); if the block persists, go **fully quiet
+  for 3600s** (no probes — a single probe during the block can reset the window),
+  then resume. The batch then self-heals through any number of block cycles.
+- Escalating per-request backoff (120s → 240s → 360s …) inside one pass works for
+  short blocks, but it is wasteful for window-based blocks: prefer the quiet-hour
+  pattern above.
 
 ### The resumable, self-pacing pass pattern that works
 
@@ -120,3 +129,76 @@ date existed.
   (P2093) ∪ Flickr-user-id (P3267), plus the account category listing. The
   Wikidata item for the account (e.g. Q3070609) carries the `Flickr user ID`
   property — that's what ties the category → Wikidata → SPARQL chain together.
+
+## 4. Uploading to Commons: the server-side URL-fetch 429 trap (2026-08-10 field notes)
+
+**Symptom.** Bulk-uploading Flickr originals to Commons via the MediaWiki API
+with `action=upload&url=<live.staticflickr.com URL>` (pywikibot
+`Site.upload(..., source_url=...)`, or any upload-by-URL client) fails
+persistently with:
+
+```
+API error http-bad-status: There was a problem during the HTTP request: 429 Too Many Requests
+[servedby: mw-api-ext.eqiad.main-...; help: See https://commons.wikimedia.org/w/api.php ...]
+```
+
+after the first ~100 uploads. Local-file uploads, queries, logins, and the
+account's own rate-limit state all stay healthy.
+
+**Root cause — the fetch happens server-side, on Wikimedia's shared outbound IPs.**
+`action=upload&url=` does *not* record the URL: MediaWiki's `UploadFromUrl`
+fetches the image itself, from Wikimedia's shared outbound fetcher IPs. Those
+IPs hit Flickr's CDN rate limiter after ~100 originals in a burst — the exact
+same "~150–200 originals, then a wave of HTTP 429s" behavior this document
+describes for direct downloads (section 1), except the victims are shared by
+everyone (UploadWizard's Flickr importer, flickr2commons, all URL-upload
+clients), so the block can persist for hours and is not under your control.
+
+**How to confirm it's this and not your account being rate-limited:**
+
+1. The error envelope arrives inside an **HTTP 200** response — the API
+   request itself succeeded; the failure happened inside MediaWiki. (A
+   requests-layer spy sees `200` + `{"error":{"code":"http-bad-status",...}}`.)
+2. `apierror-http-bad-status` is MediaWiki's message for "an **internal
+   outbound** HTTP request failed" (same code appears for Parsoid/VisualEditor
+   backend failures) — not a per-account API rate limit.
+3. `meta=userinfo&uiprop=ratelimits` shows `hits=None/max=None` for `upload`
+   (no classic MediaWiki limit applies), and the 2026 API-gateway limits give
+   authenticated sessions 2000 req/min — yet URL uploads still 429.
+4. The same file uploads instantly when posted as bytes (`source_filename`).
+
+**Fix — download locally, then upload the file.** Client-side downloads are
+resumable, cacheable, and rate-limit-manageable with the section-1 pass
+pattern; the upload then goes out as a multipart file POST that touches no
+outbound fetcher. Proven in production: 97/458 files via URL upload then a
+hard block; switched to local-file uploads and the remaining 361 completed
+cleanly at ~6s/file.
+
+**Keep the 429 retry anyway.** `Retry-After` (fallback ≥60s) + retry the file
+up to 4 times: local uploads can still hit transient gateway 429s, and the
+backoff makes the batch self-healing.
+
+## 5. The client-side download block is also a thing — and a filename gotcha
+
+**Download-side 429 waves (verified 2026-08-10).** The same staticflickr
+per-IP limiter that blocks Wikimedia's server-side fetchers (section 4) also
+blocks *your* client downloads: ~150-200 originals at ~10/min sustained
+tripped it, then every download returned plain `HTTP Error 429: Too Many
+Requests` (from `urllib`/`requests` — no MediaWiki envelope involved, no
+Retry-After header on the body). Recovery follows the same window model as
+section 1: the block persists **~60 minutes after the last 429** and probes
+or retries during the block can extend it — a sustained burst does **not**
+clear in ~10 minutes (a lone 429 after a short burst can).
+Fix: retry downloads with backoff (120s minimum, 4 attempts) and let the
+batch pause-and-recover instead of failing files; if the block persists,
+go fully quiet for 3600s (no probes) before the next pass. Keep the resumable
+cache so re-runs skip what's already on disk.
+
+**`/` in Commons filenames (verified 2026-08-10).** MediaWiki's upload API
+rejects filenames containing `/` with a `badfilename` warning (it suggests
+the hyphenated form, e.g. `Homozygous-Heterozygous`) and does not upload the
+file. Sanitize `/`→`-` in the target name while keeping the Flickr title
+verbatim in the description/source. Also note: pywikibot 11.6.0 crashes on
+ANY upload Warning result with `TypeError: 'bool' object is not callable`
+(it calls the bool `ignore_warnings`), so sanitize names *before* uploading
+rather than relying on warning handling.

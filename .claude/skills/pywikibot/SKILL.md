@@ -1,13 +1,13 @@
 ---
 name: pywikibot
-description: Use Pywikibot — the Python library and CLI tool suite for automating work on MediaWiki sites (Wikipedia, Wikidata, Commons, and any other MediaWiki wiki). Covers installation, configuration, the core object model, page generators, the bot framework, built-in scripts, and Wikidata/Commons integration
+description: Automate MediaWiki work with Pywikibot — installation, configuration, the core object model, page generators, the bot framework, built-in scripts, and Wikidata/Commons integration
 license: MIT
 compatibility: opencode
 depends_on: [wikimedia-api-access, wikidata]
 skill_discovery_hints:
   - keywords: ["Pywikibot", "bot", "automated editing", "page generator", "pwb.py", "MediaWiki bot"]
   - keywords: ["bulk edit", "category operations", "template harvesting", "archive bot", "replace.py"]
-last_verified: 2026-06-10
+last_verified: 2026-08-10
 ---
 
 > ⚠️ **User-Agent required:** Pywikibot sets `User-Agent` automatically based on your `user-config.py` settings, but any direct `curl`/`requests` calls in this skill still need a proper header. See the **[wikimedia-api-access](../wikimedia-api-access/SKILL.md)** skill for format and rate-limiting patterns. Before writing custom code alongside Pywikibot, load that skill for the required User-Agent boilerplate.
@@ -579,6 +579,18 @@ uploader = commons.upload('local.jpg',
     description='== Summary==\nDescription here\n==Licensing==\n{{self|cc-by-sa-4.0}}',
     comment='Uploading via bot')
 ```
+
+> ⚠️ **Prefer local files over `source_url=` uploads.** `Site.upload(filepage, source_url=...)` posts `action=upload&url=...`, which makes **MediaWiki fetch the URL server-side** from Wikimedia's shared outbound fetcher IPs. For Flickr originals those IPs get rate-limited by Flickr's CDN after ~100 fetches, and every URL upload then fails with `API error http-bad-status: ... 429 Too Many Requests` (an HTTP 200 response whose error envelope reports the *internal* outbound fetch failure — the account itself is not rate-limited; `uiprop=ratelimits` shows no limits). Download the file client-side first (resumable, cached) and pass `source_filename=` — the multipart file POST bypasses the outbound fetcher entirely. See the flickr skill's `references/flickr-download-and-date-pitfalls.md` §4 for the full diagnosis and the retry/`Retry-After` pattern.
+
+> ⚠️ **pywikibot 11.6.0 warning-path bug:** when `action=upload` returns a
+Warning result (e.g. `badfilename`, `exists`), `Uploader.submit()` calls
+`ignore_warnings(...)` even when it is the bool `False` →
+`TypeError: 'bool' object is not callable` (the `raise UploadError` after the
+`return False` is dead code, so a callable silently returns `False` instead).
+Workarounds: sanitize filenames so warnings never fire (`/` is rejected with
+`badfilename`), check `site.upload()`'s return value (`False` = not
+uploaded), and pre-check `FilePage.exists()`.
+
 
 ### Image Transfer Script
 

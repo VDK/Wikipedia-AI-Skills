@@ -165,9 +165,26 @@ focused on GLAM (galleries, libraries, archives, museums) impact measurement.
 |---|---|
 | `https://wikimedia.org/api/rest_v1/metrics/commons-analytics/` | [Commons analytics](https://doc.wikimedia.org/generated-data-platform/aqs/analytics-api/reference/commons.html) |
 
-**Important:** Only categories on the [allow list](https://gitlab.wikimedia.org/repos/data-engineering/airflow-dags/-/blob/main/main/dags/commons/commons_category_allow_list.tsv)
-and their subcategories (up to 7 levels deep) have data. To add a category, see
-[Commons Impact Metrics on Wikitech](https://wikitech.wikimedia.org/wiki/Commons_Impact_Metrics).
+**Key endpoints** (dates `YYYYMM01`, end exclusive; category in URL form):
+
+- `category-metrics-snapshot/{category}/{start}/{end}` — headline impact stats
+  (media-file-count, used-media-file-count, leveraging-wiki-count, pageviews, edits)
+- `pageviews-per-category-monthly/{category}/{scope}/{wiki}/{start}/{end}`
+- `top-pages-per-category-monthly/{category}/{scope}/{wiki}/{year}/{month}`
+- `top-viewed-media-files-monthly/{category}/{scope}/{wiki}/{year}/{month}`
+- `top-wikis-per-category-monthly/{category}/{scope}/{year}/{month}`
+- `media-file-metrics-snapshot/{media-file}/{start}/{end}` (per-file)
+- Full spec: `…/commons-analytics/api-spec.json` (14 endpoints total)
+
+**Allow-list requirement (critical):** only categories on the
+[allow list](https://gitlab.wikimedia.org/repos/data-engineering/airflow-dags/-/blob/main/main/dags/commons/commons_category_allow_list.tsv)
+and their subcategories (up to 7 levels deep) have data. Unregistered
+categories return **HTTP 404** with *"the category you asked for is not loaded
+yet"* — treat 404 as "not registered", not as an error. Registration: add
+`{{Views from category}}` to the category page (staff process requests at
+month-end; submit by the 20th; no retroactive data). See the
+[`wikimedia-commons`](../../wikimedia-commons/SKILL.md) skill's Commons Impact
+Metrics section for the full process and the try-CIM-then-fallback pattern.
 
 ### Allow List Discovery
 

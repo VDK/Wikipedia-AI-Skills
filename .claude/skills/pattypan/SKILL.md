@@ -8,7 +8,7 @@ skill_discovery_hints:
   - keywords: ["pattypan", "batch upload", "bulk upload", "spreadsheet", "xls", "Excel 97-2003"]
   - keywords: ["GLAM", "upload template", "Information template", "Commons upload"]
   - keywords: ["upload metadata", "file descriptions", "wikitext template"]
-last_verified: 2026-08-05
+last_verified: 2026-08-10
 ---
 
 > ⚠️ **This skill is derived from the pattypan source code and verified against its actual libraries (jxl + FreeMarker).** If you have the source checkout, trust this skill over online tutorials: the format contract below is exactly what `pattypan/src/pattypan/panes/{LoadPane,CreateFilePane}.java`, `Util.java`, and `Template.java` implement.
@@ -28,6 +28,13 @@ A pattypan spreadsheet is **at least two sheets in one `.xls` file** — pattypa
 
 - **Row 0 must contain `path` and `name` columns.** pattypan throws `"Header error: ... 'path' and/or 'name' headers are missing"` if either is absent.
 - **`path`** — absolute local file path **or** an `http://`/`https://` URL.
+  ⚠️ **Prefer local paths for Flickr (and other third-party CDN) batches** — a URL
+  row makes the MediaWiki server fetch the image itself, and Wikimedia's shared
+  outbound fetch IPs get rate-limited by Flickr's CDN after ~100 fetches (every URL
+  upload then fails with `apierror-http-bad-status: ... 429 Too Many Requests`,
+  verified 2026-08-10). Download client-side first and point `path` at the local
+  file; see the [flickr](../flickr/SKILL.md) skill's references §4 for the full
+  diagnosis.
 - **`name`** — the target Commons filename. For local paths, pattypan appends the extension from `path` automatically when the name lacks one. For URLs, `name` must already include a valid extension.
 - **Other columns** — one per template variable you want to fill per-file, plus `categories`. Column header names must **exactly match** the `${var}` names used in the Template sheet (case-sensitive).
 - A `date` column, if present, should hold values in `YYYY-MM-DD` or `YYYY-MM-DD HH:mm`. Text cells pass through verbatim (trimmed); Excel DATE cells are reformatted to `yyyy-MM-dd[ HH:mm]` **in UTC** (pattypan applies `SimpleDateFormat` in the UTC zone) — so write dates as text to avoid timezone/locale surprises.

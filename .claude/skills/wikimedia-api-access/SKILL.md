@@ -4,10 +4,10 @@ description: Access Wikipedia and Wikimedia APIs (REST, Action API, SPARQL) with
 license: MIT
 compatibility: opencode
 skill_discovery_hints:
-  - keywords: ["Wikipedia API", "Action API", "REST API", "API endpoint", "api.php", "rest_v1", "User-Agent", "rate limit", "API call"]
+  - keywords: ["Wikipedia API", "Action API", "REST API", "API endpoint", "api.php", "rest_v1", "User-Agent", "rate limit", "API call", "ratelimits"]
   - keywords: ["Site Matrix", "sitematrix", "domain mapping", "language code", "language domain", "yue wikipedia", "zh-yue", "interlanguage"]
   - keywords: ["page summary", "page extract", "extintro", "exintro", "page content", "fetch article", "get page"]
-last_verified: 2026-06-10
+last_verified: 2026-08-10
 ---
 
 All requests to Wikimedia APIs **must** include a descriptive `User-Agent` header or they will be blocked (HTTP 403 or 429). This is enforced by the [Wikimedia Foundation User-Agent Policy](https://foundation.wikimedia.org/wiki/Policy:Wikimedia_Foundation_User-Agent_Policy).
@@ -158,6 +158,37 @@ if resp.status_code == 429:
     time.sleep(retry_after)
     continue  # retry the request in a loop
 ```
+
+### 2026 Gateway Rate-Limit Classes (what 429 actually means now)
+
+Since 2026 Wikimedia enforces **gateway-level per-client rate limits** on the
+Action and REST APIs, in addition to MediaWiki's per-wiki action limits. The
+client class is derived from identity: session cookies (bot passwords,
+OAuth with cookies) → authenticated; a compliant User-Agent alone →
+UA-only; nothing → unidentified (per IP).
+
+| Client class | Limit |
+|---|---|
+| Unidentified (IP only) | 10 req/min |
+| Compliant User-Agent only | 200 req/min |
+| Authenticated (logged-in session) | 2000 req/min |
+| Bot flag on any wiki / WMCS / stewards | exempt |
+
+Practical consequences (verified 2026-08-10):
+
+- **Authenticate with a bot password (cookies) to get the 2000/min class** —
+  pywikibot, UploadWizard, and any cookie-holding client qualify automatically.
+- **A 429 while authenticated at a modest rate is almost never your account**:
+  check `action=query&meta=userinfo&uiprop=ratelimits` — `hits/max/window`
+  show the classic per-action limits and are `None` when nothing applies.
+- The gateway's 429 body is a MediaWiki-style JSON envelope
+  (`{"error":{"code":"http-bad-status","info":"There was a problem during
+  the HTTP request: 429 Too Many Requests",...}}`) — see the
+  [wikipedia-error-handling](../wikipedia-error-handling/SKILL.md) skill for
+  the three distinct 429 flavors and how to tell them apart.
+- Retry-After may be absent; the docs recommend exponential backoff (min 5s)
+  when it is. For per-IP CDN blocks (e.g. live.staticflickr.com) the window
+  can be ~60 min — see the [flickr](../flickr/SKILL.md) skill.
 
 ### Caching Strategy (Prevents Redundant Calls)
 
