@@ -72,6 +72,20 @@ scp my-script.py ${TOOLFORGE_USER:-your-username}@login.toolforge.org:/data/proj
 rsync -avz --exclude '.*' ./my-tool/ ${TOOLFORGE_USER:-your-username}@login.toolforge.org:/data/project/my-tool-name/
 ```
 
+### 2.1 Copy Files via rsync/scp
+
+> ⚠️ **One-shot commands over SSH — don't use `become`.** `become` is for
+> interactive shells; over a chained SSH command (`ssh host "become X; cmd"`)
+> it replaces the shell and the rest of the chain runs unbecome'd. For
+> non-interactive one-shot commands use `sudo` directly:
+>
+> ```bash
+> ssh ${TOOLFORGE_USER:-your-username}@dev.toolforge.org "sudo -niu tools.<tool-name> <command>"
+> ```
+>
+> Also note: SSH as your **personal** account only — `tools.<tool>@dev.toolforge.org`
+> is not an SSH login (fails with `Permission denied (publickey)`).
+
 **Always use `rsync` for repeated deployments** — it only transfers changed files and preserves permissions.
 
 ### 2.2 Deploy via Git (Recommended for Maintained Tools)
