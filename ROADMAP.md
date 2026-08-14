@@ -126,6 +126,10 @@
 
 ### Future skill candidates
 
+> Candidates are triaged with the **7-question candidacy filter** and the
+> failure-severity test in [`docs/Design-philosophy.md`](docs/Design-philosophy.md) §2 —
+> documented evidence of organic model failure outranks all other criteria.
+
 > See **[`research/future-skills/talk-pages-research-recommendations.md`](research/future-skills/talk-pages-research-recommendations.md)** for a detailed analysis of 7 ranked candidates derived from systematic research into talk pages, community health, and tooling. The top remaining candidate is `wikimedia-community-health` (toxicity, retention, newcomer dynamics).
 
 - **General-topic article drafting** — SOPs for writing non-biography Wikipedia articles (events, organizations, concepts, places). Different structure templates, different notability criteria, different citation patterns. Prior art exists in the original project roadmap.

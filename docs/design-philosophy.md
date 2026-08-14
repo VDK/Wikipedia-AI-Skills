@@ -32,10 +32,46 @@ what gets a standalone skill vs. what should be a section inside another skill:
 | **T2 — High-value** | The model could figure it out but at 2-5× the time/cost | `wikimedia-search-cirrussearch` (complex syntax) |
 | **T3 — Nice-to-have** | Niche workflow, saves hours when needed | `wikimedia-commons-svg` (vector editing) |
 
-**The bar for a new standalone skill:** Either the LLM catastrophically fails
-without it (T1), or it saves 2-5× time on a common workflow (T2). If it's
-only useful 1% of the time, it should be a reference doc or SOP inside an
-existing skill.
+### The Candidacy Filter — 7 questions before a new skill
+
+Run these before proposing a standalone skill. Each test has a
+"fails → do this instead" outcome; a failure doesn't mean "don't document
+it" — it means "put it somewhere cheaper".
+
+| # | Test | Question | Fails → do this instead |
+|---|---|---|---|
+| 1 | **Procedure vs. topic** | Is it "how to do X" (reusable procedure) or "what X is" (reference)? | Reference → link the canonical docs or put it in a skill's `references/` — not a skill |
+| 2 | **Generalizability** | Does it recur across **many instances** — across wikis, or across many pages on one wiki? (Single-wiki is fine when the task recurs thousands of times, e.g. enwiki notability assessment; single page/campaign is not.) | One page / one campaign → template or essay, not a skill |
+| 3 | **Reuse frequency** | Is it a step in a workflow that recurs across many tasks — not just "could be useful someday"? | Rare → SOP or section inside an existing skill |
+| 4 | **Context clutter** | Would its discovery keywords cause spurious loads (collide with other skills' hints, fire on tangents)? | Tighten keywords, or merge into a hub skill |
+| 5 | **Staleness** | Does it encode volatile facts that will rot (rate limits, counts, deadlines, staff processes)? | Encode only the shape and gotchas; link the live source for the rest (e.g. api-spec.json, the CIM allow-list TSV) |
+| 6 | **Fetch-on-demand** | Is the knowledge better pulled live from an API/tool than pre-loaded? | Point at the live endpoint or docs instead of enumerating what the API can answer |
+| 7 | **Home vs. new** | Could this be a section of an existing skill instead of a standalone? | Search the catalog and the skills network first; add the section there |
+
+**Decision rule:** a standalone skill needs a pass on #1 (procedure), #2
+(many instances), #3 (recurring), and #7 (no existing home), plus a clean
+keyword story on #4. #5 and #6 don't disqualify a topic — they shape what
+goes *into* the skill: encode the shape and gotchas the model cannot fetch
+or derive, link the live source for the rest.
+
+### Failure severity: evidence beats prediction
+
+The strongest signal that a topic deserves a skill is **evidence that the
+model fails organically without it** — not an estimate of frequency. A
+documented failure outranks every other criterion:
+
+- **Catastrophic failure without the skill** — invented endpoints, 403/blocked
+  requests, plausible-but-wrong output (verified in A/B testing or a real
+  incident) → **strong T1 candidate, even at moderate frequency**
+- **Slow but correct without the skill** (2-5× time/cost) → T2
+- **Convenience only** → T3
+
+The gold standard is the A/B methodology in `research/ab-testing/` (50%
+→ 0% silent failure rate with skills loaded). The quick version: your own
+session notes — "the agent invented endpoint X and 404'd for an hour" — are
+evidence worth more than any prediction of how often a task recurs.
+
+**The bar for a new standalone skill:** pass the 7-question candidacy filter above, then apply the tier test: either the LLM catastrophically fails without it (T1), or it saves 2-5× time on a common workflow (T2). If it's only useful 1% of the time, it should be a reference doc or SOP inside an existing skill.
 
 **T3 skills are reviewed periodically.** As Wikimedia evolves, some graduate
 to T2 (e.g., if a niche API becomes mainstream). Others may be merged if they
