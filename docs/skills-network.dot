@@ -31,6 +31,7 @@ digraph Skills {
   "wikimedia-diffs" [label="wikimedia-diffs", fillcolor="#fce4ec", style="filled,rounded", fontsize=11];
   "wikimedia-eventstreams" [label="wikimedia-eventstreams", fillcolor="#fce4ec", style="filled,rounded", fontsize=11];
   "wikimedia-i18n-l10n-for-tools" [label="wikimedia-i18n-l10n-for-tools", fillcolor="#fce4ec", style="filled,rounded", fontsize=11];
+  "wikimedia-media-usage-metrics" [label="wikimedia-media-usage-metrics", fillcolor="#fce4ec", style="filled,rounded", fontsize=11];
   "wikimedia-ml-services" [label="wikimedia-ml-services", fillcolor="#fce4ec", style="filled,rounded", fontsize=10];
   "wikimedia-page-assessment" [label="wikimedia-page-assessment", fillcolor="#fce4ec", style="filled,rounded", fontsize=11];
   "wikimedia-page-styling" [label="wikimedia-page-styling", fillcolor="#fce4ec", style="filled,rounded", fontsize=11];
@@ -195,6 +196,11 @@ digraph Skills {
   "wikimedia-i18n-l10n-for-tools" -> "wikimedia-database";
   "wikimedia-i18n-l10n-for-tools" -> "wikimedia-wikitext";
   "wikimedia-i18n-l10n-for-tools" -> "wikipedia-error-handling";
+  "wikimedia-media-usage-metrics" -> "wikimedia-api-access";
+  "wikimedia-media-usage-metrics" -> "wikimedia-commons";
+  "wikimedia-media-usage-metrics" -> "wikimedia-commons-sparql";
+  "wikimedia-media-usage-metrics" -> "wikimedia-database";
+  "wikimedia-media-usage-metrics" -> "wikimedia-pageviews";
   "wikimedia-ml-services" -> "wikimedia-api-access";
   "wikimedia-ml-services" -> "wikimedia-eventstreams";
   "wikimedia-ml-services" -> "wikimedia-page-assessment";
