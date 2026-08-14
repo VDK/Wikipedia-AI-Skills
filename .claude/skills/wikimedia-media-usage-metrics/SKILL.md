@@ -3,7 +3,7 @@ name: wikimedia-media-usage-metrics
 description: Measure and count the use of Wikimedia media files — transfers (mediacounts/mediarequests), embeds (GlobalUsage), reach (pageviews/CIM), external reuse — with verified gotchas, a decision tree, and a live report pipeline
 license: MIT
 compatibility: opencode
-depends_on: [wikimedia-api-access, wikimedia-database, wikimedia-pageviews, wikimedia-commons, wikimedia-commons-sparql]
+depends_on: [wikimedia-api-access, wikimedia-database, wikimedia-pageviews, wikimedia-commons, wikimedia-commons-sparql, wikimedia-petscan]
 skill_discovery_hints:
   - keywords: ["media usage", "file usage", "image usage", "media reach", "file reach", "media metrics", "usage analytics"]
   - keywords: ["mediacounts", "mediarequests", "GlobalUsage", "globalimagelinks", "imagelinks", "file transfer counts", "image serve counts"]
@@ -38,7 +38,7 @@ People mean four different things by "use of a media file". Mixing them is the #
 | 4 | GlobalUsage (API + `globalimagelinks`) | Cross-wiki embeds | Maintained table, on-demand query | Public API / SQL |
 | 5 | `imagelinks` (SQL) | Local embeds per wiki | On-demand SQL | Toolforge replicas |
 | 6 | `imageusage` (Action API) | Local embeds | On-demand API | Public |
-| 7 | GLAMorous / PetScan | Embeds by category, filtered | On-demand tools | Public web tools |
+| 7 | GLAMorous / PetScan | PetScan: file-population selection; GLAMorous: embeds by category | On-demand tools | Public web tools |
 | 8 | Pageviews API | Reach (File page + embeds) | On-demand API (pre-aggregated) | Public REST |
 | 9 | Commons Impact Metrics / AQS | Reach, leverage, edits (GLAM) | Pre (monthly) | Public API + dumps |
 | 10 | BaGLAMa 2 / GLAMorgan | Legacy GLAM reach | Pre (cron) / on-demand | Public tools |
@@ -76,8 +76,24 @@ Definitive cross-wiki "where used".
 - `imagelinks`: `{db}_p.imagelinks` (`il_from`, `il_to`) — local usage incl. non-Commons images. Single-wiki only.
 - `imageusage`: `list=imageusage&iutitle=File:…` — on-demand local usage, no SQL needed.
 
-### 3.7 GLAMorous / PetScan
-Community tools over GlobalUsage/imagelinks. GLAMorous = global usage per category; PetScan = category × usage × filter intersections. Slow at scale.
+### 3.7 GLAMorous / PetScan — population selection, not counting
+
+PetScan's role in metrics workflows is **upstream: choosing the file set to
+measure**. It does **not** emit usage counts — output params like
+`globalusage=1` or `file_usage=1` are silently ignored (verified 2026-08-14).
+Useful functions (verified):
+
+- **Category-tree enumeration** in namespace 6 with `depth` — e.g. 360
+  bitmap files in `Crab_Nebula` at depth 1 via `file_type=bitmap`.
+- **Filters:** `file_type` (bitmap/drawing/video/audio/office/multimedia),
+  license templates (`templates_yes=PD-US`), Wikidata/SPARQL sources
+  (`depicts`, camera, …), ORES.
+- **Bulk export** (JSON/TSV/CSV) feeds the measurement step: enumerate with
+  PetScan → measure transfers with mediarequests/Sightglass (§3.14) →
+  reach via pageviews/CIM.
+
+Full parameter surface: the **[wikimedia-petscan](../wikimedia-petscan/SKILL.md)** skill.
+GLAMorous = global usage per category (embeds), slow at scale.
 
 ### 3.8 Pageviews API — `metrics/pageviews/*`
 API reference and media-views (mediarequests) coverage live in the
@@ -128,6 +144,8 @@ reporting; fills the gap left by GLAMorgan (current usage only) and CIM
 ## 4. Decision tree
 
 ```
+Want to choose WHICH files to measure (category tree × filters)?
+  → PetScan enumeration (namespace 6) → feed titles into the branches below
 Want "how many times was the file served?"
   → quick single file: mediarequests per-file
   → whole category tree, no cluster: Sightglass (mediacounts UI/API)
