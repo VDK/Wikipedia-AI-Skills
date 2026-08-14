@@ -76,6 +76,40 @@ Returns daily pageview counts for a specific article over a date range.
 }
 ```
 
+### Media Requests (mediarequests) — file/media load counts
+
+Sibling API for **media file loads**, not page views. Base:
+`https://wikimedia.org/api/rest_v1/metrics/mediarequests/`
+
+> ⚠️ **`per-file` is removed (HTTP 404).** The old
+> `mediarequests/per-file/{project}/{file}/...` time-series endpoint no longer
+> exists. Per-file counts are only available through the daily aggregate:
+
+```
+GET /top/{project}/{media-type}/{year}/{month}/{day}
+```
+
+| Parameter | Description | Example |
+|---|---|---|
+| `project` | Wikimedia project | `en.wikipedia` |
+| `media-type` | One of `all-media-types`, `image`, `video`, `audio`, `document`, `other` | `image` |
+| `year`/`month`/`day` | Date (numeric, slash-style path) | `2024`/`01`/`01` |
+
+**Response** — up to **1,000 files per day**:
+```json
+{ "items": [ { "referer": "en.wikipedia", "media_type": "image", "year": "2024",
+  "month": "01", "day": "01", "files": [
+    { "file_path": "/wikipedia/donate/1/14/Wikimedia_Foundation_logo_-_wordmark.svg",
+      "requests": 11512041, "rank": 1 } ] } ] }
+```
+
+- `file_path` is the **hash path**, not a `File:` title — match on the basename.
+- Files outside the daily top-1000 have no API-accessible count.
+- **Do not confuse with `pageviews/per-article` on `File:` pages** — that
+  counts description-page views (small); `mediarequests` counts actual media
+  loads (large). "How many people viewed this image" is a mediarequests
+  question, not a pageviews question.
+
 ### Top by Country
 
 ```

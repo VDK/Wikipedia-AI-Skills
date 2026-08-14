@@ -7,7 +7,8 @@ depends_on: [wikimedia-api-access]
 skill_discovery_hints:
   - keywords: ["template", "wikitext template", "parser function", "transclusion", "Lua module"]
   - keywords: ["#if", "#switch", "#invoke", "TemplateData", "infobox template"]
-last_verified: 2026-06-10
+  - keywords: ["limitreport", "ResourceLoader", "Scribunto", "Module namespace", "ns 828"]
+last_verified: 2026-08-12
 ---
 
 > ⚠️ **User-Agent required:** The API examples below hit Wikimedia endpoints. All requests must include a descriptive `User-Agent` header. See the **[wikimedia-api-access](../wikimedia-api-access/SKILL.md)** skill for the correct format.
@@ -463,6 +464,11 @@ Returns all templates transcluded on the page, with namespace (ns=10 for templat
 }
 ```
 
+> ⚠️ **Response shape differs by API.** With `action=query&prop=templates`
+> (above), each entry has `ns` + `title`. With `action=parse&prop=templates`,
+> entries use `ns` + `exists` + `*` — the template title is under the `*` key,
+> **not** `title`. Don't read `.title` off a `parse` response.
+
 ### Find All Pages Using a Template
 
 ```
@@ -529,22 +535,29 @@ action=query&prop=info&inprop=protection&titles=Template:Infobox_person&format=j
 ### How to Check Limits
 
 ```
-action=parse&page=Albert_Einstein&prop=modules&format=json
+action=parse&page=Albert_Einstein&prop=limitreportdata&format=json
 ```
 
-Returns the `limitreport` with current usage vs. limits:
+Returns the `limitreport` with current usage vs. limits (key `0` = current
+value, `1` = limit):
 
 ```json
 {
-  "parse": {
-    "limitreport": {
-      "pp-expand-depth": "16/40",
-      "pp-expand-size": "32450/2048000",
-      "expensive-function-count": "2/500"
-    }
-  }
+ "parse": {
+   "limitreportdata": [
+     { "name": "limitreport-ppvisitednodes", "0": 11174, "1": 1000000 },
+     { "name": "limitreport-postexpandincludesize", "0": 478489, "1": 2097152 },
+     { "name": "limitreport-expensivefunctioncount", "0": 2, "1": 500 }
+   ]
+ }
 }
 ```
+
+> ⚠️ **Do NOT use `prop=modules` for this.** `prop=modules` returns the page's
+> **ResourceLoader JS/CSS modules** (`ext.cite.ux-enhancements`, `mediawiki.page.media`, …),
+> not Lua modules and not the limit report. Lua (Scribunto) module dependencies
+> come from `prop=templates` filtered to `ns=828` (see SOP: Lua Modules above).
+> The human-readable variant is `prop=limitreport`.
 
 ---
 

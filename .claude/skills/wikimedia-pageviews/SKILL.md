@@ -7,7 +7,8 @@ depends_on: [wikimedia-api-access]
 skill_discovery_hints:
   - keywords: ["pageviews", "traffic", "popularity", "article views", "views per article"]
   - keywords: ["top pages", "pageview API", "daily views", "analytics"]
-last_verified: 2026-06-10
+  - keywords: ["media views", "mediarequests", "file views", "image views", "media requests"]
+last_verified: 2026-08-12
 ---
 
 > ⚠️ **User-Agent required:** The REST API examples below require a descriptive `User-Agent` header. See the **[wikimedia-api-access](../wikimedia-api-access/SKILL.md)** skill for the correct format and rate-limiting patterns.
@@ -107,6 +108,29 @@ skill for the full pipeline, and the **Title Format Guide** in the
 endpoint reference for the complete cross-API table.
 
 ---
+
+---
+
+## **Media Views (mediarequests) — image/file load counts**
+
+Pageview metrics count **page loads**; they do not count how often an image or
+media file was actually served. For the latter, use the **Media Requests API**
+(`/metrics/mediarequests/`):
+
+- ⚠️ **`mediarequests/per-file` is removed — it returns HTTP 404.** There is
+  no per-file time-series endpoint anymore.
+- The working per-file data is the **per-day aggregate**:
+  `https://wikimedia.org/api/rest_v1/metrics/mediarequests/top/{project}/{media-type}/{year}/{month}/{day}`
+  — returns the day's top media files (`file_path`, `requests`, `rank`).
+  `media-type` is one of `all-media-types`, `image`, `video`, `audio`,
+  `document`, `other`.
+- ⚠️ **Only the top 1,000 files per day are returned.** A long-tail file
+  missing from that day's top-1000 has no API-accessible count — aggregate
+  over several days if you need a range.
+- **Description-page views ≠ media views.** `pageviews/per-article` on a
+  `File:` page counts views of the description page (typically a few dozen/day);
+  media requests count every load of the underlying file (often thousands×
+  more). Never use pageviews to answer "how many people viewed this image".
 
 ## **Constraint & Guardrails**
 
