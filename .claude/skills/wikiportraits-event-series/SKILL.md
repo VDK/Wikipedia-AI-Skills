@@ -1,6 +1,6 @@
 ---
 name: wikiportraits-event-series
-description: 'This skill should be used when the user asks to "create an event year category", "add festival edition items", "link editions with follows and followed by", "create Wikidata items for event editions", "make year categories for an event", "add P155 and P156", "add official website and references to edition items", "set up WikiPortraits event series", or mentions recurring events, festival editions, conference editions, event series, follows/followed by, edition numbers, WikiPortraits events, or year-by-year event categories on Commons. Covers the full recurring-event workflow in one place - Wikidata edition items (P31/P179/P393/P585/P276/P17/P155/P156/P856/P973, references, aliases), edition numbering across cancelled-year gaps, and the Commons <Event> <YYYY> year-category scheme.'
+description: Create Wikidata edition items and Commons year categories for recurring events (festivals, conferences) — P155/P156 follows/followed-by chains, cancelled-year numbering, edition claims, and the <Event> <YYYY> category scheme
 license: MIT
 compatibility: opencode
 depends_on: [wikimedia-api-access, wikidata, pywikibot, wikimedia-commons-categories]
