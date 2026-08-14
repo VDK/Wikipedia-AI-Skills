@@ -58,7 +58,7 @@ Returns daily pageview counts for a specific article over a date range.
 
 | Parameter | Description | Example |
 |---|---|---|
-| `project` | Wikimedia project | `en.wikipedia` |
+| `referer` | `all-referers`, `internal`, `external`, `unknown`, or a project domain | `all-referers` |
 | `access` | Access method | `all-access`, `desktop`, `mobile-web`, `mobile-app` |
 | `agent` | User agent type | `all-agents`, `user`, `spider`, `automated` |
 | `article` | Page title (underscores) | `Albert_Einstein`, `Python_(programming_language)` |
@@ -81,17 +81,22 @@ Returns daily pageview counts for a specific article over a date range.
 Sibling API for **media file loads**, not page views. Base:
 `https://wikimedia.org/api/rest_v1/metrics/mediarequests/`
 
-> ⚠️ **`per-file` is removed (HTTP 404).** The old
-> `mediarequests/per-file/{project}/{file}/...` time-series endpoint no longer
-> exists. Per-file counts are only available through the daily aggregate:
+> **`per-file` works — but the path format is strict.**
+> `mediarequests/per-file/{referer}/{agent-type}/{file-path}/{granularity}/{start}/{end}`
+> where `file-path` is the upload path URL-encoded **with the leading slash**
+> (`/wikipedia/commons/0/00/Crab_Nebula.jpg` → `%2Fwikipedia%2Fcommons%2F0%2F00%2FCrab_Nebula.jpg`;
+> omit the slash or the `agent-type` segment and you get a 404 "invalid route",
+> which previously misled a note into claiming the endpoint was removed).
+> `referer` ∈ `all-referers|internal|external|unknown` or a project domain;
+> `agent-type` ∈ `user|spider|automated|all-agents`.
 
 ```
-GET /top/{project}/{media-type}/{year}/{month}/{day}
+GET /top/{referer}/{media-type}/{year}/{month}/{day}
 ```
 
 | Parameter | Description | Example |
 |---|---|---|
-| `project` | Wikimedia project | `en.wikipedia` |
+| `referer` | `all-referers`, `internal`, `external`, `unknown`, or a project domain | `all-referers` |
 | `media-type` | One of `all-media-types`, `image`, `video`, `audio`, `document`, `other` | `image` |
 | `year`/`month`/`day` | Date (numeric, slash-style path) | `2024`/`01`/`01` |
 

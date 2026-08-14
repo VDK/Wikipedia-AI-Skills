@@ -117,13 +117,20 @@ Pageview metrics count **page loads**; they do not count how often an image or
 media file was actually served. For the latter, use the **Media Requests API**
 (`/metrics/mediarequests/`):
 
-- ⚠️ **`mediarequests/per-file` is removed — it returns HTTP 404.** There is
-  no per-file time-series endpoint anymore.
-- The working per-file data is the **per-day aggregate**:
-  `https://wikimedia.org/api/rest_v1/metrics/mediarequests/top/{project}/{media-type}/{year}/{month}/{day}`
-  — returns the day's top media files (`file_path`, `requests`, `rank`).
-  `media-type` is one of `all-media-types`, `image`, `video`, `audio`,
-  `document`, `other`.
+- **Per-file time series (exists, tricky path):**
+ `https://wikimedia.org/api/rest_v1/metrics/mediarequests/per-file/{referer}/{agent-type}/{file-path}/{granularity}/{start}/{end}`
+ - `file-path` is the upload path URL-encoded **with the leading slash**
+ (`/wikipedia/commons/0/00/Crab_Nebula.jpg` -> `%2Fwikipedia%2Fcommons%2F0%2F00%2FCrab_Nebula.jpg`;
+ omit the slash and you get 404 "invalid route"). `referer` is
+ `all-referers|internal|external|unknown` or a project domain; `agent-type` is
+ `user|spider|automated|all-agents`; `granularity` is `daily|monthly`.
+ (Corrected 2026-08-14: an earlier note claimed per-file was removed - that
+ was a path-format error.)
+- Per-day aggregate:
+ `https://wikimedia.org/api/rest_v1/metrics/mediarequests/top/{referer}/{media-type}/{year}/{month}/{day}`
+ - returns the day's top media files (`file_path`, `requests`, `rank`).
+ `media-type` is one of `all-media-types`, `image`, `video`, `audio`,
+ `document`, `other`; `referer` accepts `all-referers` or a project domain.
 - ⚠️ **Only the top 1,000 files per day are returned.** A long-tail file
   missing from that day's top-1000 has no API-accessible count — aggregate
   over several days if you need a range.
