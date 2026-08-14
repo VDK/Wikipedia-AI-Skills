@@ -101,15 +101,32 @@ API reference and media-views (mediarequests) coverage live in the
 verified for this workflow:
 - **GOTCHA (verified):** File-page views ≈ interest in the file itself, NOT media views. Example: `File:Crab_Nebula.jpg` ≈ 4–12 File-page views/day vs **211,688** mediarequests/day (thumbnails embedded in articles).
 - **GOTCHA (verified):** `per-article` returns **HTTP 404 for pages with no pageview data** (e.g. low-traffic user/talk pages) — the page still exists, it just has zero records in the window. Treat 404 as 0 views, not an error (the pipeline script does this).
-
 ### 3.9 Commons Impact Metrics / Commons Analytics AQS
-Official GLAM "impact" product — full endpoint table, allow-list registration, and the
-try-CIM-then-fallback pattern live in the **[wikimedia-commons](../wikimedia-commons/SKILL.md)**
-skill. Caveats unique to usage-metrics workflows:
-- **GOTCHA (verified):** unregistered category → HTTP 404 body "…not loaded yet" = the not-allow-listed signal (not an error).
-- **GOTCHA (verified):** `category-metrics-snapshot` has **no pageviews field** — use `pageviews-per-category-monthly`.
-- **Caveats:** allow-list only (~1,755 GLAM/campaign categories); monthly; max depth 7; no retroactive backfill; monthly drift (pageviews attributed from 1st even if file added mid-month); pageview-based (not mediarequests); category rename breaks pipeline until allow-list updated.
-- **GOTCHA (verified):** unregistered category → HTTP 404 body "…not loaded yet" = the not-allow-listed signal (not an error). `category-metrics-snapshot` has **no pageviews field** — use `pageviews-per-category-monthly`.
+
+> ⚠️ **NOT on-demand.** CIM is pre-computed **monthly** for **allow-listed**
+> categories only (~1,755 GLAM/campaign categories, depth <= 7). If the
+> category is not registered, queries return HTTP 404 (body "...not loaded
+> yet") — that is the not-registered signal, not an API error. You cannot
+> get same-day numbers for an arbitrary category; use the §5 live pipeline
+> for anything not on the list.
+
+**Registration is a staff cycle, not an API call:** add
+`{{Views from category}}` to the category page -> hidden tracking category ->
+staff add it to the allow-list at month-end (submit by the 20th) -> data
+starts the following month, **no retroactive backfill**. A Phabricator
+ticket (project `Commons-Impact-Metrics-Requests`) is created automatically
+for documentation; renames/removals go through the same monthly cycle via
+the pre-filled Phabricator form. Full process: the
+**[wikimedia-commons](../wikimedia-commons/SKILL.md)** skill.
+
+Endpoint table, `category-scope`/`edit-type` values, and the try-CIM-
+then-fallback pattern also live in **wikimedia-commons**. Gotchas unique
+to usage-metrics workflows:
+- **GOTCHA (verified):** `category-metrics-snapshot` has **no pageviews
+  field** — use `pageviews-per-category-monthly`.
+- **Caveats:** monthly drift (pageviews attributed from the 1st even if a
+  file was added mid-month); pageview-based (not mediarequests); category
+  rename breaks the pipeline until the allow-list is updated.
 
 ### 3.10 BaGLAMa 2 / GLAMorgan / GLAM Wiki Dashboard
 Legacy community GLAM tools (Magnus Manske) that CIM was built to replace. Prone to outages/inconsistency. `https://glamtools.toolforge.org/baglama2/`, `…/glamorgan.html`.
@@ -155,7 +172,7 @@ Want "where is it used, on which wikis?"
   → GlobalUsage API (single file) / globalimagelinks SQL (bulk)
 Want "how many people saw it in articles?"
   → GlobalUsage → pageviews (arbitrary files)
-  → CIM/Commons Analytics (GLAM + allow-listed categories)
+  -> CIM/Commons Analytics — only if the category is already allow-listed (else the live pipeline, §5)
 Want "is it reused off-wiki?"
   → mediacounts referer_external
 Want "GLAM institutional impact dashboard"

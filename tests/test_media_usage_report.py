@@ -40,7 +40,7 @@ class TestSkillContent:
         # pageviews 404 = zero data
         assert "404 as 0 views" in text
         # CIM snapshot has no pageviews field
-        assert "no pageviews field" in text
+        assert "no pageviews" in text and "pageviews-per-category-monthly" in text
 
     def test_no_stale_perfile_removal_claim(self):
         text = read_skill("wikimedia-media-usage-metrics")
@@ -58,6 +58,13 @@ class TestSkillContent:
         assert "population selection" in text
         assert "does **not** emit usage counts" in text
         assert "file_type=bitmap" in text
+
+    def test_cim_not_on_demand_callout(self):
+        text = read_skill("wikimedia-media-usage-metrics")
+        assert "NOT on-demand" in text
+        assert "allow-listed" in text and "pre-computed" in text
+        assert "Views from category" in text and "Phabricator" in text
+        assert "no retroactive backfill" in text
 
 
 class TestResolvePath:
