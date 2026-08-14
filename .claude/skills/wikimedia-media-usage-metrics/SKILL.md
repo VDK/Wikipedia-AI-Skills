@@ -45,13 +45,14 @@ People mean four different things by "use of a media file". Mixing them is the #
 | 11 | Mediacounts referer fields | External/off-wiki reuse | Pre | Dumps / cluster |
 | 12 | SDC SPARQL (WCQS/QLever) | Discovery (depicts, etc.) | On-demand | Public / OAuth |
 | 13 | EventStreams | Real-time usage *changes* | Real-time push | Public SSE |
+| 14 | **Sightglass** (Toolforge) | Transfers for files/category trees, shareable | Pre (mediacounts) + on-demand queries | Public web + OAuth API ([repo](https://gitlab.wikimedia.org/repos/wikiportraits/sightglass)) |
 
 ## 3. Method deep-dive (endpoints + gotchas)
 
 ### 3.1 Mediacounts — dumps + Hive `wmf.mediacounts`
 Daily TSV, one row per file. Columns: `total`, `original`, `transcoded_image` (width buckets 0-199 … 1000+), `transcoded_audio`, `transcoded_movie` (height buckets), `total_response_size`, `referer_internal/external/unknown`.
 - **Caveats:** HTTP 304s NOT counted; MediaViewer prefetch inflates image counts up to ~50%; stream "jump back to start" double-counts; no bot filtering (status-code based only); not per-wiki.
-- **Access:** `https://dumps.wikimedia.org/other/mediacounts/daily/` (TSV); Hive table `wmf.mediacounts` (hourly Parquet) for cluster users.
+- **Access:** `https://dumps.wikimedia.org/other/mediacounts/daily/` (TSV); Hive table `wmf.mediacounts` (hourly Parquet) for cluster users. **No cluster or dumps?** Use the Sightglass web tool/API (§3.14) for per-file and category-tree queries.
 - **Ideal:** bulk/historical GLAM reporting, bandwidth/byte-volume analysis, offline batch, referer attribution.
 
 ### 3.2 Mediarequests AQS — `metrics/mediarequests/*`
@@ -106,11 +107,30 @@ Discovery only, not counting — find files by `depicts`/license/camera, then fe
 ### 3.13 EventStreams
 Real-time file *usage changes* (page adds/removes file) via `stream.wikimedia.org`, not view counts.
 
+### 3.14 Sightglass — Toolforge UI + API over mediacounts (WikiPortraits project)
+
+[Sightglass](https://sightglass.toolforge.org/) (`sightglass.toolforge.org`) queries the **mediacounts** dataset server-side for
+individual files OR category trees (subcategory depth 0-10, up to 300,000
+files per category query), with shareable results. Made for GLAM/impact
+reporting; fills the gap left by GLAMorgan (current usage only) and CIM
+(opt-in, misses short bursts). Data since 2015-01-01, ~2-day lag.
+
+- **Web UI:** browse queries on the dashboard; queries auto-delete after 7
+  days unless saved. **Login (Wikimedia OAuth, identity-only) is required to
+  run queries** — for load management.
+- **API (authenticated, except jobs):**
+  - `GET /api/media/stats?filename=File:X.jpg&start=YYYYMMDD&end=YYYYMMDD&granularity=daily|monthly&referer=&agent=` — per-file mediacounts (defaults: last 30 days, all-referers, all-agents).
+  - `POST /api/category/stats` — JSON `{category, start, end, granularity, depth (0-10), referer, agent}`; **async** — returns `{jobId, statusUrl}` immediately.
+  - `GET /api/jobs/:jobId` — job progress/results; **no auth needed (shareable permalink)**.
+  - `GET /api/media/search?query=...` — Commons file search.
+- **Gotchas:** counts inherit mediacounts caveats (bot/scraper/prefetch inflation, 304s not counted); unauthenticated calls return 401; category jobs can take a while (300k-file cap).
+
 ## 4. Decision tree
 
 ```
 Want "how many times was the file served?"
   → quick single file: mediarequests per-file
+  → whole category tree, no cluster: Sightglass (mediacounts UI/API)
   → bulk/historical: mediacounts dumps
   → custom/bespoke: raw webrequest (cluster)
 Want "where is it used, on which wikis?"

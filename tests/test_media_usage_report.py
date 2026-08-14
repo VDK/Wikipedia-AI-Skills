@@ -46,6 +46,13 @@ class TestSkillContent:
         text = read_skill("wikimedia-media-usage-metrics")
         assert "is removed" not in text
 
+    def test_sightglass_section(self):
+        text = read_skill("wikimedia-media-usage-metrics")
+        assert "Sightglass" in text
+        assert "api/media/stats" in text and "api/category/stats" in text
+        assert "300,000" in text  # category query cap
+        assert "OAuth" in text  # login requirement documented
+
 
 class TestResolvePath:
     """Title -> upload path resolution, including the utm tracking-param strip."""
