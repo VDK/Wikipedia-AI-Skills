@@ -422,6 +422,9 @@ become my-tool-name
 # Start the web service from the built image
 toolforge webservice buildservice start --mount=none
 
+# Give memory-hungry apps headroom (default limit is 512 Mi — see gotchas below)
+toolforge webservice buildservice start --mount=none -m 1Gi
+
 # Alternatively, create a service.template so 'webservice start' works directly:
 echo -e 'type: buildservice\nmount: none' > service.template
 
@@ -440,6 +443,26 @@ toolforge webservice buildservice stop
 # Get an interactive shell inside the running container
 toolforge webservice buildservice shell
 ```
+
+**Build Service gotchas (field-tested 2026-08-14, Reframe Flask+OpenCV tool):**
+
+- **`runtime.txt` is dead** — heroku/python buildpacks ≥ 6.x fail the build
+  with `Error: The runtime.txt file isn't supported`; use `.python-version`
+  containing just the major.minor (e.g. `3.11`).
+- **Default pod memory limit is 512 Mi** — each gunicorn sync worker is a
+  separate process (~100–150 MB RSS with OpenCV/numpy/ML libraries), so
+  `--workers=4` under 512 Mi = OOMKilled container. Raise with `-m 1Gi` at
+  start; budget workers × per-process RSS against the limit.
+- **OOM symptom:** intermittent `upstream connect error or disconnect/reset
+  before headers. reset reason: connection termination` from the ingress.
+  Diagnose with `kubectl get pod <pod> -o jsonpath='{.status.
+  containerStatuses[0].lastState.terminated.reason}'` (→ `OOMKilled`),
+  `kubectl top pods` (live RSS), and `kubectl get deployment -o jsonpath='{.spec.
+  template.spec.containers[0].resources}'` (limit).
+- **Build source:** any public Git repo works — GitLab, **GitHub**
+  (verified), or Gerrit: `toolforge build start https://github.com/<user>/<repo>`.
+- gunicorn 26 logs a harmless `Control server error: [Errno 13] Permission
+  denied` at container startup — non-fatal, ignore.
 
 **Note on NFS mounts:** By default, `--mount=none` is recommended. If your tool needs
 to read/write files in `/data/project/`, use `--mount=all` and reference the path via

@@ -256,20 +256,24 @@ repository and Toolforge builds a container image from it.
 |--------------------------|---------------------------|
 | Manual `scp` uploads | `git push` triggers deploy |
 | Venv lives on NFS | Dependencies baked into image |
-| Runtime tied to Toolforge images | Any Python version via `runtime.txt` |
+| Runtime tied to Toolforge images | Any Python version via `.python-version` |
 | ASGI/WSGI both work but manual | Native support for both |
 
 ### Step-by-Step
 
 **1. Create a Git repo for your tool**
 
-Go to [toolsadmin.wikimedia.org](https://toolsadmin.wikimedia.org/tools/) →
-select your tool → `Git repositories` → `create repository`. Clone the
-resulting URL (use the public HTTPS URL for Build Service):
+Any **public** Git repository works as a build source — GitLab
+(`gitlab.wikimedia.org/toolforge-repos/...`), GitHub, or Gerrit. Two options:
+
+- Toolforge-hosted: go to [toolsadmin.wikimedia.org](https://toolsadmin.wikimedia.org/tools/) →
+  select your tool → `Git repositories` → `create repository`. Clone the
+  resulting URL (use the public HTTPS URL for Build Service).
+- GitHub (verified working 2026-08-14 for the Reframe tool): push your repo
+to GitHub, then point the build at it:
 
 ```bash
-git clone https://gitlab.wikimedia.org/toolforge-repos/my-python-tool.git
-cd my-python-tool
+toolforge build start https://github.com/<user>/<repo>
 ```
 
 **2. Set up your project**
@@ -295,13 +299,16 @@ pip freeze > requirements.txt
 
 **3. Specify Python version (optional)**
 
-Create `runtime.txt` to pin a specific Python version:
+Create `.python-version` to pin a Python version — **not** `runtime.txt`.
+Buildpacks since heroku/python 6.x **reject `runtime.txt` outright** with
+`Error: The runtime.txt file isn't supported ... replaced by the more widely
+supported .python-version file`. Put the major.minor version only, no
+`python-` prefix, no patch:
 
 ```bash
-echo "python-3.12.1" > runtime.txt
+echo "3.12" > .python-version
 ```
 
-Format: `python-<major>.<minor>.<patch>` — case-sensitive, no spaces.
 If omitted, the latest available Python is used.
 
 **4. Create a Procfile**
@@ -340,8 +347,8 @@ toolforge build start https://gitlab.wikimedia.org/toolforge-repos/my-python-too
 # Check build status — wait for "ok (Succeeded)"
 toolforge build show
 
-# Start the webservice
-toolforge webservice buildservice start --mount=none
+# Start the webservice — give heavy apps memory headroom with -m (see gotchas)
+toolforge webservice buildservice start --mount=none -m 1Gi
 ```
 
 **7. Verify**
@@ -373,7 +380,40 @@ toolforge build start https://gitlab.wikimedia.org/toolforge-repos/my-python-too
 | FastAPI / ASGI app | Build Service required |
 | Existing Flask app already on NFS | Traditional (SOP 1) |
 | Quick prototype, no Git setup | Traditional (SOP 1) |
-| Need to pin exact Python version | Build Service with `runtime.txt` |
+| Need to pin exact Python version | Build Service with `.python-version` |
+
+---
+
+## Build Service Gotchas (field-tested 2026-08-14)
+
+These bit the Reframe deployment (Flask + OpenCV on the buildservice backend)
+and are easy to hit again:
+
+- **`runtime.txt` is dead.** heroku/python ≥ 6.x fails the build with
+  `Error: The runtime.txt file isn't supported`. Use `.python-version`
+  containing just the major.minor (e.g. `3.11`).
+- **Default pod memory limit is 512 Mi.** `toolforge webservice
+  buildservice start` without `-m` gives you 512 Mi — fine for small Flask
+  apps, but every gunicorn sync worker is a separate process, so
+  memory-hungry libraries (OpenCV, numpy, ML models ~100–150 MB RSS each)
+  blow the limit with `--workers=4`. Raise it at start time:
+  `toolforge webservice buildservice start --mount=none -m 1Gi`.
+- **OOM symptom signature:** intermittent
+  `upstream connect error or disconnect/reset before headers. reset reason:
+  connection termination` from the ingress — looks like a network flake but
+  is usually the container being killed mid-request. Diagnose:
+  ```bash
+  kubectl get pod <pod> -o jsonpath='{.status.containerStatuses[0].lastState.terminated.reason}'
+  # → OOMKilled
+  kubectl top pods                     # live RSS
+  kubectl get deployment -o jsonpath='{.spec.template.spec.containers[0].resources}'
+  # → check memory limit
+  ```
+- **Budget memory per worker:** sync workers × per-process RSS ≈ peak. Two
+  workers at 1 Gi is comfortable for OpenCV-scale workloads.
+- **gunicorn 26 prints a harmless startup error** when its control server
+  can't bind in the container (`Control server error: [Errno 13] Permission
+  denied`) — non-fatal, ignore it.
 
 ---
 
