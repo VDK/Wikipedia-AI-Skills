@@ -1,6 +1,6 @@
 ---
 name: wikimedia-ml-services
-description: Score article quality, revert risk, edit quality (goodfaith/damaging), readability, topic classification, reference quality, language identification, content translation recommendations, article descriptions, and article country using Wikimedia ML inference APIs (Lift Wing and legacy ORES)
+description: Score article quality, revert risk, edit quality, readability, topics, references, language ID, and article country via Wikimedia ML inference APIs (Lift Wing + legacy ORES), plus LiftWing LLM chat completions (Qwen3, OpenAI-compatible)
 depends_on: [wikimedia-api-access]
 license: MIT
 compatibility: opencode
@@ -12,7 +12,8 @@ skill_discovery_hints:
   - keywords: ["reference", "citation quality", "reference need", "unsourced", "reference risk"]
   - keywords: ["language detection", "langid", "identify language"]
   - keywords: ["translation", "content translation", "cross-language", "recommendation"]
-last_verified: 2026-06-10
+  - keywords: ["LLM", "chat completions", "Qwen", "OpenAI-compatible", "text generation", "LiftWing Studio", "large language model"]
+last_verified: 2026-08-14
 ---
 
 > ⚠️ **User-Agent required:** All API calls below need a descriptive `User-Agent` header. See the **[wikimedia-api-access](../wikimedia-api-access/SKILL.md)** skill for the correct format and rate-limiting patterns.
@@ -69,6 +70,81 @@ Replace `{wiki}` with the wiki code (e.g., `enwiki`, `frwiki`, `arwiki`). Availa
 > 💡 **Prefer modern models.** The Revscoring models are frozen — no retraining, no new wikis. The modern models (especially `revertrisk-*`, `outlink-topic-model`) are trained on fresher data and cover more wikis.
 
 > ⚠️ **Model naming is inconsistent.** The modern `articlequality` model is called just `articlequality` (not `articlequality-language-agnostic`). The content translation service is a **GET REST API** at `/service/lw/recommendation/api/v1/translation`, not a POST inference model. See the individual SOPs below.
+
+---
+
+## Reference: LiftWing Large Language Models (chat completions)
+
+LiftWing also hosts **open-weight LLM chat models** — a different service from
+the scoring models above (OpenAI-compatible chat API, not `:predict` POSTs).
+Quickstart: the [Wikimania 2026 page](https://wikitech.wikimedia.org/wiki/Machine_Learning/LiftWing/Large_Language_Models/Wikimania_2026);
+full platform reference: the [main LLM docs](https://wikitech.wikimedia.org/wiki/Machine_Learning/LiftWing/Large_Language_Models).
+
+| Model | Card | Context | Notes |
+|---|---|---|---|
+| `llm-qwen3-14b` | [Qwen3-14B-FP8](https://huggingface.co/Qwen/Qwen3-14B-FP8) | 16K tokens | 14B general-purpose chat model; good default |
+| `llm-qwen36-27b` | [Qwen3.6-27B-FP8](https://huggingface.co/Qwen/Qwen3.6-27B-FP8) | 32K tokens | 27B chat model; largest available |
+
+Both multilingual and instruction-tuned; responses stream token-by-token.
+
+### Endpoint (OpenAI-compatible, no API key)
+
+```
+https://api.wikimedia.org/service/lw/inference/v1/models/llm-<model>/openai/v1/chat/completions
+```
+
+- ⚠️ **Model name must match the URL path** — the `model` in the JSON body
+  must equal the `llm-<model>` segment in the URL; a mismatch 404s.
+- No API key: any OpenAI client works by pointing `base_url` at the model
+  endpoint (the URL above minus `/chat/completions`) and using
+  `api_key="none"`.
+- Responses may start with a `<think>…</think>` reasoning block — strip it
+  if you only want the final answer.
+- `stream=True` is supported (token-by-token output).
+
+```python
+from openai import OpenAI
+client = OpenAI(
+    base_url="https://api.wikimedia.org/service/lw/inference/v1/models/llm-qwen3-14b/openai/v1",
+    api_key="none",  # public endpoint; no key required
+)
+resp = client.chat.completions.create(
+    model="llm-qwen3-14b",
+    messages=[{"role": "user", "content": "Explain vLLM in one sentence."}],
+    stream=True,
+)
+for chunk in resp:
+    print(chunk.choices[0].delta.content or "", end="")
+```
+
+### Rate limits & access
+
+- **Anonymous public access: 100 requests/hour** — counted per client,
+  shared across all models; over the limit → HTTP 429 until the window
+  resets. No API key required.
+- **From Toolforge: effectively unlimited** (automatic — no request
+  needed). The standard path for tools and hackathon apps.
+- Experimental platform: **no SLA**; models/endpoints can change without
+  notice.
+
+### LiftWing Studio (no-code chat UI)
+
+[LiftWing Studio](https://liftwing-studio.wmcloud.org/) is an Open WebUI
+chat interface: register an account (activated after **admin approval**),
+then chat with model selection, chat history, and document uploads.
+Privacy differs from the API: **Studio saves your chats** by default (use a
+temporary chat to avoid persistence); the API itself persists nothing — no
+logging, retention, or training.
+
+### Capabilities
+
+Works today: chat & text completions (OpenAI-compatible), streaming,
+multilingual input, context up to 32K tokens. **Not available yet:** tool /
+function calling, web search / browsing, server-side RAG, vision / multimodal.
+DIY RAG works — fetch the context yourself and include it in the prompt.
+Models have fixed training cutoffs: retrieve current facts rather than
+trusting model memory, and verify before any on-wiki use (outputs are
+assistive drafts; bot/editing policies still apply).
 
 ---
 
