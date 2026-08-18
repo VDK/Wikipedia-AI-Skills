@@ -652,7 +652,7 @@
   "https://your-tool.toolforge.org": "2026-08-10T12:57:50Z",
   "https://\u0440\u0443.wikipedia.org": "2026-08-10T13:07:28Z"
  },
- "generated_at": "2026-08-16T03:45:22Z",
+ "generated_at": "2026-08-18T07:31:08Z",
  "generator": "scripts/refresh-url-registry.py",
  "skip": {
   "example": "illustrative placeholder URLs",
@@ -1186,12 +1186,14 @@
   "https://web.archive.org/cdx/search/cdx?url=flickr.com%2Fphotos%2F44783532%40N07%2F*&output=json&fl=original&collapse=urlkey": 200,
   "https://web.archive.org/cdx/search/cdx?url=flickr.com%2Fphotos%2F44783532%40N07%2F*&output=json&fl=timestamp,original,statuscode,digest&filter=statuscode:200&collapse=digest": 200,
   "https://web.archive.org/cdx/search/cdx?url=flickr.com%2Fphotos%2Fstiftelsen%2F*&output=json&fl=timestamp,original,statuscode,digest&filter=statuscode:200&collapse=digest": 200,
+  "https://web.archive.org/cdx/search/cdx?url=live.staticflickr.com/65535/<id": -1,
   "https://web.archive.org/web/": 200,
   "https://web.archive.org/web/*/URL": 200,
   "https://web.archive.org/web/20050918211029/http://www.newsday.com/community/guide/lihistory/ny-history-hs509b,0,7157701.story": 200,
   "https://web.archive.org/web/20260605000000/https://example.com/original-article": -1,
   "https://web.archive.org/web/<page_ts": -1,
   "https://web.archive.org/web/<timestamp": -1,
+  "https://web.archive.org/web/<ts": -1,
   "https://whitenoise.readthedocs.io/en/stable/django.html": 200,
   "https://wikibento.toolforge.org/?config=https://w.wiki/TR9R": 200,
   "https://wikimedia.org/api/rest_v1/": 200,
@@ -1318,5 +1320,5 @@
   "https://your-tool.toolforge.org": -1,
   "https://\u0440\u0443.wikipedia.org": 0
  },
- "user_agent": "WikipediaSkill/1.0 (https://github.com/fuzheado/Wikipedia-AI-Skills; andrew.lih@gmail.com) ContentGapResearch"
+ "user_agent": "wikipedia-ai-skills-url-registry/1.0 (scheduled GitHub Action; https://github.com/fuzheado/Wikipedia-AI-Skills)"
 }
