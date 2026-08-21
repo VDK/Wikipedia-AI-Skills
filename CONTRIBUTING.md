@@ -301,7 +301,7 @@ Test that the agent respects each guardrail. For example, if a skill says "never
 5. **Do NOT update `tests/conftest.py`** — It auto-discovers skill directories from the filesystem
 6. **Run the checklist** — Go through the [Content Accuracy Checklist](#content-accuracy-checklist)
 7. **Run the full test suite:** `python3 -m pytest tests/ -q`
-8. **Open the PR** — Include a clear description of what changed and why
+8. **Open the PR** — Include a clear description of what changed and why. For **new skills**, run the 7-question candidacy filter in [`docs/Design-philosophy.md`](docs/Design-philosophy.md) §2 and record the verdict (which tests passed, and any failure-severity evidence) in the PR description.
 
 > **CI will catch missed registrations.** The `.github/workflows/skill-registration-check.yml` workflow
 > runs on every push to the `main` branch and on PRs that touch skill files. It verifies that every
@@ -325,6 +325,7 @@ Test that the agent respects each guardrail. For example, if a skill says "never
 - [ ] Policy links verified
 - [ ] Code examples tested
 - [ ] Guardrails documented
+- [ ] Candidacy filter applied (new skills only) — 7 questions + failure-severity test, see `docs/Design-philosophy.md` §2
 
 ## Testing
 <!-- Describe how you tested the change -->

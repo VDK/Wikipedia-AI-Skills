@@ -150,3 +150,33 @@ class TestApiAccessRateLimitDetails:
         assert 'too many requests' in text.lower()
         assert 'too many titles' in text.lower() or 'titles' in text.lower()
         assert 'rvsection' in text or 'section=0' in text
+
+
+class TestLiftWingLLMSection:
+    """Verify the LiftWing LLM chat-completions section in wikimedia-ml-services."""
+
+    def _text(self):
+        from conftest import read_skill
+        return read_skill("wikimedia-ml-services")
+
+    def test_llm_models_listed(self):
+        text = self._text()
+        assert "llm-qwen3-14b" in text and "llm-qwen36-27b" in text
+        assert "Qwen3-14B" in text and "Qwen3.6-27B" in text
+
+    def test_openai_compatible_endpoint(self):
+        text = self._text()
+        assert "chat/completions" in text
+        assert "api.wikimedia.org/service/lw/inference/v1/models/llm-" in text
+        assert "api_key=\"none\"" in text
+
+    def test_rate_limits(self):
+        text = self._text()
+        assert "100 requests/hour" in text
+        assert "429" in text
+        assert "Toolforge" in text
+
+    def test_gotchas(self):
+        text = self._text()
+        assert "must match the URL path" in text  # model name == URL segment
+        assert "think" in text  # reasoning wrapper

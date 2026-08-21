@@ -4,10 +4,10 @@ description: Access Wikipedia and Wikimedia APIs (REST, Action API, SPARQL) with
 license: MIT
 compatibility: opencode
 skill_discovery_hints:
-  - keywords: ["Wikipedia API", "Action API", "REST API", "API endpoint", "api.php", "rest_v1", "User-Agent", "rate limit", "API call"]
+  - keywords: ["Wikipedia API", "Action API", "REST API", "API endpoint", "api.php", "rest_v1", "User-Agent", "rate limit", "API call", "ratelimits"]
   - keywords: ["Site Matrix", "sitematrix", "domain mapping", "language code", "language domain", "yue wikipedia", "zh-yue", "interlanguage"]
   - keywords: ["page summary", "page extract", "extintro", "exintro", "page content", "fetch article", "get page"]
-last_verified: 2026-06-10
+last_verified: 2026-08-10
 ---
 
 All requests to Wikimedia APIs **must** include a descriptive `User-Agent` header or they will be blocked (HTTP 403 or 429). This is enforced by the [Wikimedia Foundation User-Agent Policy](https://foundation.wikimedia.org/wiki/Policy:Wikimedia_Foundation_User-Agent_Policy).
@@ -158,6 +158,37 @@ if resp.status_code == 429:
     time.sleep(retry_after)
     continue  # retry the request in a loop
 ```
+
+### 2026 Gateway Rate-Limit Classes (what 429 actually means now)
+
+Since 2026 Wikimedia enforces **gateway-level per-client rate limits** on the
+Action and REST APIs, in addition to MediaWiki's per-wiki action limits. The
+client class is derived from identity: session cookies (bot passwords,
+OAuth with cookies) → authenticated; a compliant User-Agent alone →
+UA-only; nothing → unidentified (per IP).
+
+| Client class | Limit |
+|---|---|
+| Unidentified (IP only) | 10 req/min |
+| Compliant User-Agent only | 200 req/min |
+| Authenticated (logged-in session) | 2000 req/min |
+| Bot flag on any wiki / WMCS / stewards | exempt |
+
+Practical consequences (verified 2026-08-10):
+
+- **Authenticate with a bot password (cookies) to get the 2000/min class** —
+  pywikibot, UploadWizard, and any cookie-holding client qualify automatically.
+- **A 429 while authenticated at a modest rate is almost never your account**:
+  check `action=query&meta=userinfo&uiprop=ratelimits` — `hits/max/window`
+  show the classic per-action limits and are `None` when nothing applies.
+- The gateway's 429 body is a MediaWiki-style JSON envelope
+  (`{"error":{"code":"http-bad-status","info":"There was a problem during
+  the HTTP request: 429 Too Many Requests",...}}`) — see the
+  [wikipedia-error-handling](../wikipedia-error-handling/SKILL.md) skill for
+  the three distinct 429 flavors and how to tell them apart.
+- Retry-After may be absent; the docs recommend exponential backoff (min 5s)
+  when it is. For per-IP CDN blocks (e.g. live.staticflickr.com) the window
+  can be ~60 min — see the [flickr](../flickr/SKILL.md) skill.
 
 ### Caching Strategy (Prevents Redundant Calls)
 
@@ -331,9 +362,25 @@ The `/{lang}.wikipedia.org/api/rest_v1/page/summary/{title}` endpoint returns a 
 - **Unicode control characters:** Some language editions include bare Unicode formatting characters (e.g., U+200E LEFT-TO-RIGHT MARK) in the `extract` text. These are not removed by `.strip()` — filter them with `''.join(c for c in text if c.isprintable())` before processing.
 - **The `type` field is only available in the REST API**, not in the Action API's `prop=extracts`. If you use the Action API, you'd need to check categories or templates instead.
 
----
+### Embedding wiki pages (iframes)
 
-## **Tooling**
+Wikimedia pages can be embedded in `<iframe>` elements — they send **no
+`X-Frame-Options` and no CSP `frame-ancestors`** (verified 2026-08-13 on
+en.wikipedia.org, en.m.wikipedia.org, and commons.wikimedia.org; this has
+held since the m.-domain unification). This enables direct page embeds:
+`<iframe src="https://en.wikipedia.org/wiki/Chess" referrerpolicy="no-referrer">`.
+The mobile view works the same way with `?useformat=mobile` (see above —
+query param goes before any `#fragment`). The framed page is a trusted
+Wikimedia page (no sandbox needed) and links browse inside the iframe.
+
+- **Fallback if Wikimedia ever adds `frame-ancestors`:** fetch
+  `action=parse&page=Title&prop=text&format=json&formatversion=2&origin=*`
+  (CORS `*`, verified) and inject the HTML into a sandboxed `srcdoc` iframe.
+  Parse output has **no `<script>` tags** (verified) and inlines
+  TemplateStyles, but lacks the base skin CSS — pages render unstyled-ish
+  unless you inject a `load.php` stylesheet link.
+- **Prefer the REST route for scraped/embedded content:** `/page/mobile-html/{title}`
+  returns standalone mobile-optimized HTML (stable endpoint, not deprecated).
 
 This skill includes helper scripts, reference docs, and templates:
 

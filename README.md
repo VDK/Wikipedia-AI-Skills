@@ -30,9 +30,9 @@ These skills are designed to **help you research, understand, and prepare conten
 
 ## Skills
 
-This repository contains **54 skills** organized into two groups.
+This repository contains **55 skills** organized into two groups.
 
-> 💡 **[Explore the interactive skills network →](docs/skills-network.html)** — see how all 54
+> 💡 **[Explore the interactive skills network →](docs/skills-network.html)** — see how all 55
 > skills connect to each other in a force-directed graph. Drag nodes, zoom, and hover
 > to discover cross-references between skills.
 
@@ -56,7 +56,7 @@ Skills are arranged from **foundational** (understanding how Wikipedia works) to
 | | **▸ Working with Content** |
 | [wikimedia-wikitext](.claude/skills/wikimedia-wikitext/SKILL.md) | Parse, extract, and manipulate Wikipedia and MediaWiki wikitext (templates, infoboxes, citations, links) using proper AST-based tooling instead of fragile regex patterns |
 | [wikidata](.claude/skills/wikidata/SKILL.md) | Understand and query Wikidata — the free, collaborative, multilingual knowledge graph that underpins Wikipedia's inter-language links, Commons structured data, and semantic facts across all Wikimedia projects. Covers SPARQL, the Wikibase REST/Action APIs, RDF data dumps, and semantic web concepts |
-| [wikidata-event-editions](.claude/skills/wikidata-event-editions/SKILL.md) | Create and enrich Wikidata edition items for recurring events (conferences, film festivals) — P31/P179/P393/P585, P155/P156 sequence chains, official website URLs with language qualifiers, references, and SPARQL chain verification |
+| [wikiportraits-event-series](.claude/skills/wikiportraits-event-series/SKILL.md) | Create Wikidata edition items and Commons year categories for recurring events — P155/P156 follows/followed-by chains, cancelled-year numbering, edition claims, and the <Event> <YYYY> category scheme |
 | [wikidata-vector-search](.claude/skills/wikidata-vector-search/SKILL.md) | Query Wikidata by meaning, concept, or natural-language description using semantic embeddings — fuzzy semantic search, concept matching, similarity lookups, cross-lingual retrieval, and "find like this" when you don't know the exact QID or label |
 | [quickstatements](.claude/skills/quickstatements/SKILL.md) | Build and run QuickStatements batches for Wikidata and Commons — the V1 command grammar (statements, qualifiers, references, ranks, item creation), value formatting, multilingual labels/descriptions/aliases, QS 2.0 vs 3.0, and a bundled validator/generator script |
 | [wikipedia-citations](.claude/skills/wikipedia-citations/SKILL.md) | Master Wikipedia citations — CS1/CS2 templates, Wayback Machine archiving, dead link detection, bare URL expansion, citation maintenance, and reference validation |
@@ -79,6 +79,7 @@ Skills are arranged from **foundational** (understanding how Wikipedia works) to
 | [flickr-wayback-recovery](.claude/skills/flickr-wayback-recovery/SKILL.md) | Recover a deleted or offline Flickr account from the Wayback Machine (CDX enumeration, metadata scraping, image download) and batch-upload the photos missing from Wikimedia Commons via pattypan — matched by Flickr ID |
 | | **▸ Analyzing Articles** |
 | [wikimedia-pageviews](.claude/skills/wikimedia-pageviews/SKILL.md) | Retrieve traffic and popularity statistics for Wikipedia articles using cached SQL properties (sorting/filtering) or the REST API (precise historical data) |
+| [wikimedia-media-usage-metrics](.claude/skills/wikimedia-media-usage-metrics/SKILL.md) | Measure and count the use of Wikimedia media files — transfers (mediacounts/mediarequests), embeds (GlobalUsage), reach (pageviews/CIM), external reuse — with verified gotchas, a decision tree, and a live report pipeline |
 | [wikimedia-page-assessment](.claude/skills/wikimedia-page-assessment/SKILL.md) | Query Wikipedia article quality (FA/GA/B/C/Start/Stub) and importance ratings from WikiProject assessment banners on any Wikimedia wiki with the PageAssessments extension |
 | [wikimedia-ml-services](.claude/skills/wikimedia-ml-services/SKILL.md) | Score article quality, revert risk, edit quality (goodfaith/damaging), readability, topic classification, reference quality, language identification, content translation recommendations, article descriptions, and article country using Wikimedia ML inference APIs (Lift Wing and legacy ORES) |
 | [wikipedia-reference-verifiability](.claude/skills/wikipedia-reference-verifiability/SKILL.md) | Analyze whether a Wikipedia page's references contain URLs — detect bare plain-text citations, template-based citations without url= parameters, shortened footnotes, and named ref reuse. Useful for article quality assessment, NPP triage, and citation maintenance |
@@ -87,6 +88,7 @@ Skills are arranged from **foundational** (understanding how Wikipedia works) to
 | [wikipedia-en-article-audit](.claude/skills/wikipedia-en-article-audit/SKILL.md) | Audit an English Wikipedia article for structural issues, factual errors, and NPOV violations, then produce a machine-readable task graph (DAG) that another agent can execute to fix all identified problems |
 | [wikipedia-notability-assessment](.claude/skills/wikipedia-notability-assessment/SKILL.md) | Evaluate whether a subject meets Wikipedia notability guidelines — the General Notability Guideline (GNG), all 13 subject-specific SNGs with decision trees, source quality evaluation, structured report generation, AfD-ready summaries, and common invalid arguments |
 | | **▸ Other Wikimedia Projects** |
+| [wikimedia-url-shortener](.claude/skills/wikimedia-url-shortener/SKILL.md) | Create and expand w.wiki short URLs (Wikimedia's URL shortener) — 301 redirect behavior, the missing expansion API, the browser CORS trap, server-side resolution patterns, and creation via the meta.wikimedia.org `action=shortenurl` API |
 | [wiktionary-and-wikisource](.claude/skills/wiktionary-and-wikisource/SKILL.md) | Work with Wiktionary (dictionary entries, translation tables, etymologies, audio pronunciations, lexemes) and Wikisource (proofread page workflow, OCR text extraction, quality validation, compiled works) — the two largest Wikimedia content projects after Wikipedia |
 | [wikivoyage](.claude/skills/wikivoyage/SKILL.md) | Work with Wikivoyage — the free, collaborative, multilingual travel guide. Covers listing templates (See/Do/Buy/Eat/Drink/Sleep), the geographical hierarchy (continent → country → region → city), dynamic OSM maps via Kartographer, article status (stub/outline/usable/guide/star), the mobile-friendly image policy, Wikidata integration for coordinates, and batch operations |
 
@@ -144,7 +146,7 @@ Skills for building bots, web apps, and data pipelines on Wikimedia infrastructu
 | Query Wikidata with SPARQL — find items, traverse properties, filter by value | [wikidata](.claude/skills/wikidata/SKILL.md) |
 | Find Wikipedia articles that lack a Wikidata item | [wikidata](.claude/skills/wikidata/SKILL.md) |
 | Search Wikidata by meaning (not exact name) — fuzzy cross-lingual concept search | [wikidata-vector-search](.claude/skills/wikidata-vector-search/SKILL.md) |
-| Create or enrich event edition items (conferences, film festivals) with full P155/P156 chains | [wikidata-event-editions](.claude/skills/wikidata-event-editions/SKILL.md) |
+| Set up event series: Wikidata edition items, P155/P156 chains, and Commons <Event> <YYYY> year categories | [wikiportraits-event-series](.claude/skills/wikiportraits-event-series/SKILL.md) |
 | Check if a URL is archived on the Wayback Machine | `bash .claude/skills/wikipedia-citations/scripts/archive-check.sh https://example.com` |
 | Inspect a summary of all citations on a Wikipedia page | `bash .claude/skills/wikipedia-citations/scripts/citation-inspector.sh Albert_Einstein` |
 | Expand a bare URL into a proper citation template | `bash .claude/skills/wikipedia-citations/scripts/expand-bare-url.sh https://example.com` |

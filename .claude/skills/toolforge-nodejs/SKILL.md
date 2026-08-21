@@ -5,7 +5,7 @@ license: MIT
 compatibility: opencode
 depends_on: [wikimedia-toolforge, wikimedia-api-access]
 skill_discovery_hints:
-  - keywords: ["Toolforge Node", "Node.js", "Node webservice", "node22", "node18", "npm", "package.json"]
+  - keywords: ["Toolforge Node", "Node.js", "Node webservice", "node22", "node18", "node20", "npm", "package.json", "deploy to toolforge", "launch on toolforge", "serve static files", "static site"]
   - keywords: ["Toolforge port", "PORT env", "webservice port", "Toolforge Kubernetes", "web service"]
   - keywords: ["Toolforge static files", "express", "http server", "zero dependency", "built-in http"]
   - keywords: ["Cache-Control", "Varnish", "Toolforge proxy", "immutable cache", "static asset"]

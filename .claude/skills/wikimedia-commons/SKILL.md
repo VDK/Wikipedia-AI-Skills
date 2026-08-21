@@ -1,6 +1,6 @@
 ---
 name: wikimedia-commons
-description: Search, upload, and understand Wikimedia Commons — the free media repository of images, video, sound, 3D files, PDFs, and other media used across Wikipedia and its sister projects. Browse categories, find reusable media, and retrieve file metadata
+description: Search, upload, and understand Wikimedia Commons — the free media repository. Browse categories, find reusable media, retrieve file metadata, and measure category impact
 license: MIT
 compatibility: opencode
 depends_on: [wikimedia-api-access]
@@ -14,7 +14,8 @@ skill_discovery_hints:
   - keywords: ["VRT", "permission", "Commons policy"]
   - keywords: ["Commons namespaces", "gallery", "Creator namespace"]
   - keywords: ["CORS", "cross-origin", "upload.wikimedia.org", "browser app", "Canvas", "WebGL"]
-last_verified: 2026-08-05
+  - keywords: ["Commons Impact Metrics", "CIM", "category analytics", "Views from category", "impact metrics"]
+last_verified: 2026-08-10
 ---
 
 > ⚠️ **User-Agent required:** All curl and code examples in this skill access Wikimedia APIs. Requests without a descriptive `User-Agent` header will be blocked with HTTP 403 or 429. See the **[wikimedia-api-access](../wikimedia-api-access/SKILL.md)** skill for the correct format and rate-limiting patterns.
@@ -164,6 +165,87 @@ Beyond the web interfaces, Commons can be searched and queried programmatically 
 - **MediaSearch backend** — The Action API also supports `srbackend=MediaSearch` to use the newer search engine programmatically.
 
 > 💡 **When to reach for the API skill:** Any time you need to write code that interacts with Commons — whether for metadata extraction, batch analysis, or automated uploads — first load the `wikimedia-api-access` skill for the mandatory User-Agent pattern, retry logic, and rate-limiting guardrails.
+
+---
+
+---
+
+## **Commons Impact Metrics (precomputed category analytics)**
+
+The **Commons Impact Metrics** service (WMF Data Products team) precomputes
+monthly impact statistics for Commons category trees and exposes them via the
+Analytics Query Service (AQS) API. It powers the `{{Views from category}}`
+template on Commons category pages.
+
+### ⚠️ The allow-list gotcha (read this first)
+
+**Only categories on the allow-list have data.** The dataset covers ~1,755
+primary categories (GLAM institutions, Wikimedia affiliates, and campaigns such
+as Wiki Loves Monuments/Earth — not broad subjects, places, or formats), plus
+their subcategories **up to 7 levels deep**. Querying any other category
+returns **HTTP 404** with *"the category you asked for is not loaded yet"* —
+this is the expected behavior, not an API bug.
+
+### Requesting a category (registration)
+
+1. Create/choose the umbrella Commons category for the institution, affiliate,
+   or campaign (files may live in its subcategories).
+2. Check the [allow-list TSV](https://gitlab.wikimedia.org/repos/data-engineering/airflow-dags/-/blob/main/main/dags/commons/commons_category_allow_list.tsv)
+   to confirm it is not already tracked.
+3. Add **`{{Views from category}}`** to the category page — this adds it to the
+   hidden tracking category "Category requested for Commons Impact Metrics".
+4. Staff add qualifying requests to the allow-list at month-end (submit by the
+   **20th** for that month's processing; a Phabricator ticket is created
+   automatically — project `Commons-Impact-Metrics-Requests`, or file one
+   yourself via the pre-filled form).
+5. Data appears from the following month. **No retroactive calculation** by
+   default. Renames/removals also go through the monthly request cycle.
+
+### API — AQS Commons endpoints
+
+Base URL: `https://wikimedia.org/api/rest_v1/metrics/commons-analytics/` ·
+CORS-enabled (`Access-Control-Allow-Origin: *`) · dates in `YYYYMM01` format
+(end exclusive) · category in URL form (underscores).
+
+| Endpoint | Data |
+|---|---|
+| `category-metrics-snapshot/{category}/{start}/{end}` | Headline stats: media-file-count, used-media-file-count, leveraging-wiki-count, pageviews, edits… |
+| `pageviews-per-category-monthly/{category}/{category-scope}/{wiki}/{start}/{end}` | Category pageview time series |
+| `edits-per-category-monthly/{category}/{category-scope}/{edit-type}/{start}/{end}` | Category edit time series |
+| `top-pages-per-category-monthly/{category}/{category-scope}/{wiki}/{year}/{month}` | Most-viewed pages using the category's files |
+| `top-viewed-media-files-monthly/{category}/{category-scope}/{wiki}/{year}/{month}` | Most-viewed files (filmstrip data) |
+| `top-wikis-per-category-monthly/{category}/{category-scope}/{year}/{month}` | Wiki breakdown |
+| `top-editors-monthly/{category}/{category-scope}/{edit-type}/{year}/{month}` | Top contributors |
+| `top-edited-categories-monthly/{category-scope}/{edit-type}/{year}/{month}` | Global ranking of most-edited categories/trees |
+| `top-viewed-categories-monthly/{category-scope}/{wiki}/{year}/{month}` | Global ranking of most-viewed categories/trees |
+| `media-file-metrics-snapshot/{media-file}/{start}/{end}` | Per-file headline metrics (leverage counts) |
+| `pageviews-per-media-file-monthly/{media-file}/{wiki}/{start}/{end}` | Per-file pageview time series |
+| `top-pages-per-media-file-monthly/{media-file}/{wiki}/{year}/{month}` | Pages using the file with most pageviews |
+| `top-wikis-per-media-file-monthly/{media-file}/{year}/{month}` | Wikis using the file, ranked |
+| `edits-per-user-monthly/{user-name}/{edit-type}/{start}/{end}` | Per-user edit counts |
+
+`category-scope` is `shallow` (plain category) or `deep` (whole category
+tree); `edit-type` is `create`, `update`, or `all-edit-types`; `wiki` takes
+a project domain (e.g. `en.wikipedia`) or `all-wikis` for the aggregate.
+Full parameter specs: [api-spec.json](https://wikimedia.org/api/rest_v1/metrics/commons-analytics/api-spec.json).
+
+### When to use CIM vs. live queries
+
+| Situation | Use |
+|---|---|
+| Category is on the allow-list; exact, large-scale numbers (up to 1M files) | **CIM API** — instant, exact, official |
+| Arbitrary/unregistered category, on-demand analysis | **Live computation** — `categorymembers` walk + batched `globalusage` + per-page pageviews (bounded), or PetScan server-side, or GLAMorgan |
+| Deep-dive shape analysis / sampling | catprobe-style CirrusSearch sampling |
+
+A robust pattern: **try the CIM snapshot first; on 404 fall back to live
+computation** (a 404 is the API's way of saying "not registered").
+
+### Resources
+
+- [Commons project page](https://commons.wikimedia.org/wiki/Commons:Commons_Impact_Metrics) ·
+  [Request process](https://commons.wikimedia.org/wiki/Commons:Commons_Impact_Metrics/Request_process) ·
+  [API reference](https://doc.wikimedia.org/generated-data-platform/aqs/analytics-api/reference/commons.html) ·
+  [Wikitech (data model, algorithm)](https://wikitech.wikimedia.org/wiki/Commons_Impact_Metrics)
 
 ---
 

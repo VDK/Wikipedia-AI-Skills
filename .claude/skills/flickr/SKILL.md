@@ -8,7 +8,8 @@ skill_discovery_hints:
   - keywords: ["flickr", "Flickr API", "photoset", "Flickr search", "Flickr gallery", "flickr2commons"]
   - keywords: ["batch upload", "bulk upload", "Commons upload", "pattypan", "GLAM", "photographer"]
   - keywords: ["flickr metadata", "image source", "attribution", "flickr license", "flickr tags"]
-last_verified: 2026-08-05
+  - keywords: ["flickr 429", "flickr rate limit", "staticflickr block", "download blocked", "quiet hour"]
+last_verified: 2026-08-10
 ---
 
 > ⚠️ **This skill is derived from the flickr2commons Toolforge tool and the flinfo template generator** (working read-only implementations), cross-checked against the official `flickr-api-swagger` OpenAPI subset. If you have the source checkout, trust this skill: the request patterns, license map, and `{{Information}}` construction below are what flickr2commons actually uses.
@@ -251,7 +252,12 @@ notes. The robust pattern:
 - **One attempt per file per pass**; on a 429, record the ID as *deferred* and move on —
   in-pass retries fail too and extend the block.
 - **The next pass picks up deferred IDs automatically** (they are simply still missing).
-- Blocked URLs recover after a ~10-minute pause, so slow, pass-based progress is normal.
+- ⚠️ **Recovery is NOT ~10 minutes for sustained bursts** (corrected 2026-08-10): a fast
+  burst of ~150-200 originals trips a per-IP window that lasts **~60 minutes after the
+  last 429** — and each probe/retry during the block can extend it. The pattern that
+  works: on the first 429, pause ~600s and retry the file (up to 3-4 times), then go
+  **fully quiet for ~60 minutes** (no probes, no retries) before the next attempt. Do
+  not hammer or probe during the block.
 - Re-run until the missing count is zero, then verify every manifest path exists on disk.
 
 ## Guardrails
@@ -260,7 +266,7 @@ notes. The robust pattern:
 2. **Never fabricate metadata.** Unknown author/source/date → blank or flagged, never invented. (See [wikimedia-commons](../wikimedia-commons/SKILL.md) for attribution/naming rules.)
 3. **Filter non-free licenses** (anything outside `4,5,7,8,9,10,11,12`). Never map an NC/ND/ARR license to a Commons template.
 4. **Keep the photo id in the filename** (`Title (12345678901).jpg`) — the re:publica/UX Brighton coverage workflows rely on it for Commons↔Flickr matching.
-5. **Follow pattypan filename rules** (from the [pattypan](../pattypan/SKILL.md) skill): no `# < > [ ] | { }`, no `:` in names, avoid camera prefixes (`DSC_`, `IMG`, …), ≤ 240 bytes, allowed extensions.
+5. **Follow pattypan filename rules** (from the [pattypan](../pattypan/SKILL.md) skill): no `# < > [ ] | { }`, no `:` in names, avoid camera prefixes (`DSC_`, `IMG`, …), ≤ 240 bytes, allowed extensions. **Also no `/`** — MediaWiki's upload API rejects it with a `badfilename` warning (suggests `-` instead) and does NOT upload the file; sanitize `/`→`-` before uploading (verified 2026-08-10: `Homozygous/Heterozygous` → `Homozygous-Heterozygous`).
 6. **Dates as text** in `YYYY-MM-DD HH:MM:SS` — don't let Excel/pattypan reinterpret them.
 7. **Categories come from the user/event**, not invented. Join with `;` for the pattypan `categories` column.
 8. **Escaping**: `| { }` in description/source text → `&#124;` / `&#123;` / `&#125;` so the `{{Information}}` template and FreeMarker don't break.

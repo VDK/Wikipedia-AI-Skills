@@ -1,16 +1,16 @@
 ---
 name: wikipedia-error-handling
-description: Handle HTTP errors, rate limits, and API failures when interacting with Wikimedia APIs — retry strategies, backoff patterns, error response formats, and recovery procedures for the Action API, REST API, SPARQL, Lift Wing ML, and EventStreams
+description: Handle HTTP errors, rate limits, and API failures across Wikimedia services — retry/backoff patterns, error formats, and recovery for the Action API, REST, SPARQL, Lift Wing, and EventStreams
 depends_on: [wikimedia-api-access]
 license: MIT
 compatibility: opencode
 skill_discovery_hints:
-  - keywords: ["HTTP 429", "rate limit", "Retry-After", "too many requests", "backoff"]
+  - keywords: ["HTTP 429", "rate limit", "Retry-After", "too many requests", "backoff", "http-bad-status"]
   - keywords: ["HTTP 403", "forbidden", "User-Agent", "blocked", "access denied"]
   - keywords: ["error", "exception", "retry", "timeout", "connection", "failure", "debug"]
   - keywords: ["422", "parent revision", "model error", "Lift Wing error"]
   - keywords: ["SPARQL timeout", "query timeout", "504", "gateway"]
-last_verified: 2026-06-10
+last_verified: 2026-08-10
 ---
 
 > ⚠️ **User-Agent required:** All API calls below need a descriptive `User-Agent` header. See the **[wikimedia-api-access](../wikimedia-api-access/SKILL.md)** skill for the correct format and rate-limiting patterns.
@@ -57,6 +57,28 @@ Wikimedia enforces rate limits at **two levels** simultaneously — you can hit 
 | SPARQL (WDQS) | 1 query per ~second (variable), 60s processing per 60s window | Same | Per User-Agent + IP pair |
 | Lift Wing ML | 50,000 req/h, 15 req/s | 100,000 req/h, 100 req/s (OAuth) | Per IP (anon) or token (auth) |
 | EventStreams | No rate limit (server pushes data) | Same | — |
+
+> ⚠️ **The 2026 gateway rate-limit classes** (see
+> [wikimedia-api-access](../wikimedia-api-access/SKILL.md)): unidentified (IP only)
+> 10 req/min, compliant UA only 200 req/min, authenticated (bot password + cookies)
+> 2000 req/min, bot-flag/WMCS exempt. Authenticate to get the 2000/min class.
+
+### The Three Distinct 429 Flavors (diagnose before retrying)
+
+"429" appears in three different places with three different fixes. Verified
+2026-08-10 on a 518-file Commons upload batch:
+
+| Flavor | Where it appears | Meaning | Fix |
+|---|---|---|---|
+| **Client rate limit** | HTTP 429 from api.php, `Retry-After` header, MediaWiki-style JSON error body | Gateway/classic limiter hit YOUR request | Back off per Retry-After, authenticate for the 2000/min class, slow the pace |
+| **Internal outbound fetch** | HTTP **200** body containing `{"error":{"code":"http-bad-status","info":"There was a problem during the HTTP request: 429 Too Many Requests"}}` | The API call succeeded; MediaWiki's own backend fetch (e.g. `action=upload&url=` fetching the image URL) got 429'd upstream | Don't make MediaWiki fetch third-party URLs — fetch client-side and send the bytes (e.g. `source_filename` instead of `source_url`) |
+| **Third-party CDN** | Plain HTTP 429 from the CDN (e.g. `live.staticflickr.com`) on YOUR direct download | Per-IP window on the image CDN, unrelated to Wikimedia | Pause; the window lasts ~60 min after the last 429 and probes can extend it — go fully quiet, then resume (see the [flickr](../flickr/SKILL.md) skill) |
+
+**How to tell them apart:** a requests-layer spy on
+`requests.sessions.Session.send` reveals the real HTTP status; the
+`http-bad-status` envelope inside a 200 response is the internal-fetch flavor.
+`meta=userinfo&uiprop=ratelimits` (authenticated) shows whether the account
+itself has any classic limits (`hits/max/window`, `None` = none apply).
 
 ### The Universal Retry Pattern
 
