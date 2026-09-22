@@ -652,7 +652,7 @@
   "https://your-tool.toolforge.org": "2026-08-10T12:57:50Z",
   "https://\u0440\u0443.wikipedia.org": "2026-09-15T12:24:20Z"
  },
- "generated_at": "2026-09-15T12:23:08Z",
+ "generated_at": "2026-09-22T12:15:13Z",
  "generator": "scripts/refresh-url-registry.py",
  "skip": {
   "example": "illustrative placeholder URLs",
