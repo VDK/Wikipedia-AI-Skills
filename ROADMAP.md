@@ -3,6 +3,8 @@
 ## What's done
 
 ### Published skills
+- **citoid-publisher-diagnostics** - Diagnose publisher/domain citation access with production Citoid probes, controlled User-Agent/method/network comparisons, cache and archive provenance, cautious WAF/blocklist attribution, and intervention verification. Includes probe examples, dated research corrections, report/outreach templates, and official allowlisting references.
+
 - **wikimedia-codex** — Complete. Covers the Codex design system for building Wikimedia-consistent web interfaces — the three npm packages (@wikimedia/codex with Vue 3 and CSS-only components, @wikimedia/codex-icons, @wikimedia/codex-design-tokens), design token categories and usage, dark mode, bidirectionality, composables, and CDN loading (including the stale-cdnjs caveat with jsDelivr/unpkg alternatives for current versions). Ships with references for developing with Codex, components, design tokens, icons, and composables, plus scripts/list-codex-checkout.ps1 (lists components/demos/tokens from a local design-codex checkout).
 
 - **wikimedia-api-access** — Complete. Covers Wikimedia API entry points (REST, Action, SPARQL), User-Agent policy compliance, rate limiting with Retry-After backoff, connection reuse via `requests.Session()`, 403/429 error handling, and browser-based `Api-User-Agent` workaround.

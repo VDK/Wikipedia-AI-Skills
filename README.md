@@ -30,7 +30,7 @@ These skills are designed to **help you research, understand, and prepare conten
 
 ## Skills
 
-This repository contains **55 skills** organized into two groups.
+This repository contains **57 skills** organized into two groups.
 
 > 💡 **[Explore the interactive skills network →](docs/skills-network.html)** — see how all 55
 > skills connect to each other in a force-directed graph. Drag nodes, zoom, and hover
@@ -60,6 +60,7 @@ Skills are arranged from **foundational** (understanding how Wikipedia works) to
 | [wikidata-vector-search](.claude/skills/wikidata-vector-search/SKILL.md) | Query Wikidata by meaning, concept, or natural-language description using semantic embeddings — fuzzy semantic search, concept matching, similarity lookups, cross-lingual retrieval, and "find like this" when you don't know the exact QID or label |
 | [quickstatements](.claude/skills/quickstatements/SKILL.md) | Build and run QuickStatements batches for Wikidata and Commons — the V1 command grammar (statements, qualifiers, references, ranks, item creation), value formatting, multilingual labels/descriptions/aliases, QS 2.0 vs 3.0, and a bundled validator/generator script |
 | [wikipedia-citations](.claude/skills/wikipedia-citations/SKILL.md) | Master Wikipedia citations — CS1/CS2 templates, Wayback Machine archiving, dead link detection, bare URL expansion, citation maintenance, and reference validation |
+| [citoid-publisher-diagnostics](.claude/skills/citoid-publisher-diagnostics/SKILL.md) | Diagnose publisher access to Citoid: controlled User-Agent/network comparisons, cache and Wayback checks, blocklist provenance, metadata triage, and evidence-based allowlisting |
 | [wikipedia-wikitables](.claude/skills/wikipedia-wikitables/SKILL.md) | Create, parse, style, and fix MediaWiki wikitable syntax — delimiters, header/data cells, CSS classes, inline styling, rowspan/colspan, accessibility attributes, sortable and collapsible tables, and programmatic table generation from data |
 | [wikimedia-page-styling](.claude/skills/wikimedia-page-styling/SKILL.md) | Use TemplateStyles to load custom CSS on wiki pages — build responsive grid/flexbox layouts, card-based tile systems, color themes, button systems, and full visual design systems that transform plain MediaWiki pages into rich, interactive-looking interfaces |
 | [mediawiki-page-navigation](.claude/skills/mediawiki-page-navigation/SKILL.md) | Build navigation systems in MediaWiki — menu bars, subpage hierarchies, breadcrumbs, tabs, and the template logic that powers them |
@@ -151,6 +152,7 @@ Skills for building bots, web apps, and data pipelines on Wikimedia infrastructu
 | Inspect a summary of all citations on a Wikipedia page | `bash .claude/skills/wikipedia-citations/scripts/citation-inspector.sh Albert_Einstein` |
 | Expand a bare URL into a proper citation template | `bash .claude/skills/wikipedia-citations/scripts/expand-bare-url.sh https://example.com` |
 | Auto-generate a full citation from a URL, DOI, or ISBN | `bash .claude/skills/wikipedia-citations/scripts/citoid-expand.sh 10.7554/eLife.32259` |
+| Check whether a publisher blocks Citoid, identify the failing layer, or verify an unblock | [citoid-publisher-diagnostics](.claude/skills/citoid-publisher-diagnostics/SKILL.md) |
 | Check a Wikipedia page for dead links and suggest archives | `bash .claude/skills/wikipedia-citations/scripts/check-dead-links.sh Albert_Einstein` |
 | Create a wikitable from Python data | `python3 .claude/skills/wikipedia-wikitables/assets/wikitable_tools.py` |
 | | **▸ Commons & Media** |
