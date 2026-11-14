@@ -6,7 +6,7 @@ node .bin/create-test.mjs "Site Name.js" --url "ARTICLE_URL"
 ```
 Read `--help` for the current CLI. The recorder captures output, not truth: inspect title, all creators, publication date/type, canonical URL, language, publication, tags, attachments and expected empty fields against the article. Do not manufacture an expected item by copying another site's fixture.
 Cover each supported page type and meaningful variant: modern/legacy layouts, multiple authors, no author, organization versus person, optional fields, supported languages, and selection pages. Preserve existing regression coverage. An archived page may test a legacy layout, but says nothing about current origin access.
-For a multiple-item test, use the recorder's `"items": "multiple"` output. The harness observes whether `Zotero.selectItems` was called; feeding all URLs directly to a scraper can fetch multiple articles yet fail the selection test. Respect cancellation and scrape only the returned selection. `ZU.selectItems` is not a substitute.
+For a multiple-item test, use the recorder's `"items": "multiple"` output. The harness observes whether `Zotero.selectItems` was called; feeding all URLs directly to a scraper can fetch multiple articles yet fail the selection test. Respect cancellation and scrape only the returned selection. `ZU.selectItems` is not a substitute. When the results only appear after load and detection relies on `Z.monitorDOMChanges`, add `"defer": true` to that test so the harness waits for the deferred detection.
 ## Run the real workflow
 ```text
 npm run lint -- "Site Name.js"

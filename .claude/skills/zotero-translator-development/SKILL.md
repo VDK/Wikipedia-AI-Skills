@@ -29,7 +29,7 @@ Check existing translators, their target regexes, redirected hosts, and Embedded
 ### 3. Implement the smallest reliable extraction
 Create new metadata with Scaffold or the checkout's initializer; preserve translator ID, existing author credit and license when repairing a file. Bump `lastUpdated` using current UTC on substantive changes. Scope `target` to supported hosts/routes without excluding their current canonical redirects.
 Start with EM delegation when it already extracts most fields. Correct the missing/wrong fields in `itemDone`, then call `item.complete()` once. Select another approach only when needed: documented page API with `requestJSON`, identifier delegation, DOM scraping, or a small hybrid. See [EM delegation](references/em-delegation.md).
-Use promise-based sandbox APIs: `request`, `requestText`, `requestJSON`, `requestDocument`, and `Zotero.selectItems`. Do not introduce deprecated `ZU.processDocuments`, `ZU.doGet` or `ZU.doPost`; avoid new Framework code. Do not use browser-page `fetch`, click handlers, or Node APIs in translator code.
+Use promise-based sandbox APIs: `request`, `requestText`, `requestJSON`, `requestDocument`, and `Zotero.selectItems`. Do not introduce deprecated `ZU.processDocuments`, `ZU.doGet` or `ZU.doPost`; avoid new Framework code. Do not use browser-page `fetch`, click handlers, or Node APIs in translator code. Keep `detectWeb` synchronous; for results injected after load use `Z.monitorDOMChanges()`, never an async detector that polls (see [structure and style](references/style.md)).
 For multiple-item pages, present actual choices, respect cancellation, then fetch only selected documents:
 ```js
 async function doWeb(doc, url) {
